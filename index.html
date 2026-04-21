@@ -3,1186 +3,269 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>物品</title>
+<title>物品管理</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+/* ================= UI 样式 ================= */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --surface2: #f2f1ed; --border: #e8e6e0;
+  --text: #1a1917; --text2: #6b6860; --text3: #aeacaa; --accent: #2d2d2b;
+  --blue: #3b6fff; --red: #e84040; --red-bg: #fff0f0; --r: 16px;
+}
+body { font-family: 'Noto Sans SC', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 100px; font-size: 15px; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; color: inherit; transition: opacity 0.2s; }
+button:active { opacity: 0.7; }
+input { font-family: inherit; outline: none; }
 
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+/* 头部导航 */
+.hdr { background: rgba(247,246,242,.94); backdrop-filter: blur(20px); padding: 16px 20px; position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.hdr-title { font-size: 22px; font-weight: 600; }
+.hdr-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
 
-:root{
-  --bg:#f7f6f2;
-  --surface:#ffffff;
-  --surface2:#f2f1ed;
-  --border:#e8e6e0;
-  --border2:#d8d6cf;
-  --text:#1a1917;
-  --text2:#6b6860;
-  --text3:#aeacaa;
-  --accent:#2d2d2b;
-  --blue:#3b6fff;
-  --blue-bg:#eef2ff;
-  --red:#e84040;
-  --red-bg:#fff0f0;
-  --green:#2d8a4e;
-  --green-bg:#edf7f1;
-  --r:16px;
-  --r-sm:10px;
-  --sb:env(safe-area-inset-bottom,16px);
-  --st:env(safe-area-inset-top,0px);
-  --tab-h:calc(54px + var(--sb));
-  --shadow:0 2px 12px rgba(0,0,0,.06);
-  --shadow-md:0 4px 24px rgba(0,0,0,.10);
-}
+/* 物品网格 */
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px; }
+.icard { background: var(--surface); border-radius: var(--r); overflow: hidden; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; cursor: pointer; }
+.icard-img { width: 100%; aspect-ratio: 1; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 40px; position: relative; overflow: hidden; }
+.icard-img img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.icard-body { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.icard-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icard-cost { color: var(--blue); font-weight: 500; font-size: 14px; }
+.icard-cat { font-size: 12px; color: var(--text3); }
 
-body{
-  font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  padding-bottom:calc(var(--tab-h) + 16px);
-  font-size:15px;
-}
+/* 悬浮添加按钮 */
+.fab { position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px; border-radius: 28px; background: var(--accent); color: #fff; font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,.2); z-index: 25; }
 
-button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit;transition:opacity .15s,transform .12s}
-button:active{opacity:.7;transform:scale(.96)}
-input,select,textarea{font-family:inherit;outline:none}
+/* 弹窗通用样式 */
+.ov { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.ov.show { opacity: 1; pointer-events: auto; }
+.sheet { background: var(--surface); border-radius: 24px 24px 0 0; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px; transform: translateY(100%); transition: transform .3s; display: flex; flex-direction: column; gap: 16px; }
+.ov.show .sheet { transform: translateY(0); }
+.sh-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: -10px auto 16px; }
 
-/* ─── HEADER ─── */
-.hdr{
-  background:rgba(247,246,242,.94);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  padding:calc(var(--st) + 14px) 20px 12px;
-  position:sticky;top:0;z-index:30;
-  border-bottom:1px solid var(--border);
-}
-.hdr-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.hdr-left{}
-.hdr-title{font-size:24px;font-weight:600;letter-spacing:-.5px;color:var(--text)}
-.hdr-sub{font-size:13px;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:10px}
-.hdr-dot{width:4px;height:4px;border-radius:2px;background:var(--border2);display:inline-block}
-.hdr-actions{display:flex;align-items:center;gap:4px;padding-top:2px}
-.hdr-icon-btn{
-  width:34px;height:34px;border-radius:17px;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--surface2);color:var(--text2);font-size:16px;
-  transition:background .15s;
-}
-.hdr-icon-btn:active{background:var(--border)}
-.hdr-text-btn{
-  font-size:14px;font-weight:500;color:var(--blue);
-  padding:6px 10px;border-radius:8px;
-  transition:background .15s;
-}
-.hdr-text-btn:active{background:var(--blue-bg)}
+/* 表单与详情 */
+.photo-zone { width: 100%; aspect-ratio: 4/3; background: var(--surface2); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; border: 1px dashed var(--border); cursor: pointer; }
+.photo-zone img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 2; }
+.photo-zone input { position: absolute; inset: 0; opacity: 0; z-index: 3; cursor: pointer; }
+.fblock { background: var(--surface2); border-radius: var(--r); padding: 0 16px; display: flex; flex-direction: column; }
+.frow { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.frow:last-child { border-bottom: none; }
+.flabel { color: var(--text2); font-size: 14px; width: 80px; flex-shrink: 0; }
+.finput { flex: 1; text-align: right; border: none; background: none; font-size: 15px; color: var(--text); }
+.btn { width: 100%; padding: 14px; border-radius: 14px; font-size: 16px; font-weight: 600; text-align: center; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-del { background: var(--red-bg); color: var(--red); }
+.btn-cancel { background: var(--surface2); color: var(--text); }
 
-/* Search */
-.search-wrap{margin-top:10px;display:none}
-.search-wrap.show{display:block}
-.search-inner{
-  display:flex;align-items:center;
-  background:var(--surface2);
-  border-radius:12px;padding:0 12px;gap:8px;
-  border:1px solid transparent;
-  transition:border-color .2s,background .2s;
-}
-.search-inner:focus-within{background:var(--surface);border-color:var(--border2)}
-.search-icon{font-size:14px;color:var(--text3);flex-shrink:0}
-.search-inp{
-  flex:1;padding:10px 0;font-size:15px;
-  background:none;border:none;color:var(--text);
-}
-.search-inp::placeholder{color:var(--text3)}
-.search-x{font-size:18px;color:var(--text3);padding:4px;line-height:1}
-
-/* Select header */
-.hdr-sel{display:none;align-items:center;justify-content:space-between;padding-top:6px}
-.hdr-sel.show{display:flex}
-.hdr-sel-title{font-size:17px;font-weight:600}
-.hdr-sel-actions{display:flex;gap:16px}
-.hdr-sel-actions button{font-size:14px;font-weight:500}
-
-/* ─── CHIPS ─── */
-.chips-bar{
-  background:rgba(247,246,242,.94);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  border-bottom:1px solid var(--border);
-}
-.chips-scroll{
-  display:flex;gap:8px;
-  padding:10px 16px;
-  overflow-x:auto;scrollbar-width:none;
-}
-.chips-scroll::-webkit-scrollbar{display:none}
-.chip{
-  flex-shrink:0;padding:7px 16px;
-  border-radius:20px;font-size:13px;font-weight:500;
-  transition:all .18s;letter-spacing:.1px;
-}
-.chip.on{background:var(--accent);color:#fff}
-.chip:not(.on){background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.chip-mgr{
-  flex-shrink:0;width:32px;height:32px;border-radius:16px;
-  background:var(--surface2);color:var(--text2);
-  font-size:16px;display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--border);
-}
-
-/* Sort row */
-.sort-row{
-  display:flex;align-items:center;justify-content:flex-end;
-  padding:8px 16px 4px;
-}
-.sort-btn{
-  font-size:13px;color:var(--text2);
-  display:flex;align-items:center;gap:4px;
-  padding:4px 8px;border-radius:8px;
-}
-.sort-btn:active{background:var(--surface2)}
-.sort-arrow{font-size:10px;color:var(--text3)}
-
-/* ─── GRID ─── */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;padding:12px 14px 16px;
-}
-
-/* Item Card */
-.icard{
-  background:var(--surface);
-  border-radius:var(--r);
-  overflow:hidden;
-  border:1px solid var(--border);
-  transition:transform .12s,box-shadow .12s;
-  cursor:pointer;
-  position:relative;
-  display:flex;flex-direction:column;
-}
-.icard:active{transform:scale(.95);box-shadow:none}
-.icard-img{
-  width:100%;aspect-ratio:1;
-  background:var(--surface2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:32px;position:relative;overflow:hidden;
-}
-.icard-img img{
-  position:absolute;inset:0;
-  width:100%;height:100%;object-fit:cover;
-}
-.icard-body{padding:8px 10px 10px;flex:1;display:flex;flex-direction:column;gap:3px}
-.icard-name{
-  font-size:12px;font-weight:500;color:var(--text);
-  line-height:1.4;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.icard-cost{font-size:11px;color:var(--text2);font-weight:400}
-.icard-cat-dot{
-  display:inline-block;width:5px;height:5px;border-radius:3px;
-  background:var(--blue);margin-right:4px;vertical-align:middle;
-}
-
-/* Select overlay */
-.sel-ring{
-  position:absolute;inset:0;border-radius:var(--r);
-  border:2.5px solid var(--blue);opacity:0;
-  transition:opacity .15s;pointer-events:none;z-index:4;
-}
-.icard.selected .sel-ring{opacity:1}
-.sel-check{
-  position:absolute;top:7px;left:7px;
-  width:22px;height:22px;border-radius:11px;
-  border:2px solid rgba(255,255,255,.9);
-  background:rgba(0,0,0,.2);
-  display:none;align-items:center;justify-content:center;
-  z-index:5;transition:all .15s;
-}
-.sel-check.on{background:var(--blue);border-color:var(--blue)}
-.sel-check.on::after{content:"✓";color:#fff;font-size:13px;font-weight:700}
-.select-mode .sel-check{display:flex}
-
-/* Sel bottom bar */
-.sel-bar{
-  position:fixed;
-  bottom:calc(var(--tab-h));
-  left:0;right:0;
-  background:var(--surface);
-  border-top:1px solid var(--border);
-  padding:10px 20px;
-  display:none;align-items:center;gap:12px;
-  z-index:28;
-  box-shadow:0 -4px 20px rgba(0,0,0,.07);
-}
-.sel-bar.show{display:flex}
-.sel-all-btn{font-size:14px;font-weight:500;color:var(--blue);flex-shrink:0}
-.sel-del-btn{
-  flex:1;background:var(--red-bg);color:var(--red);
-  padding:12px;border-radius:12px;font-size:15px;font-weight:600;
-  text-align:center;
-}
-.sel-del-btn:disabled{opacity:.35}
-
-/* Empty */
-.empty{
-  grid-column:1/-1;
-  text-align:center;
-  padding:60px 20px;
-  color:var(--text3);
-}
-.empty-icon{font-size:48px;margin-bottom:12px;opacity:.6}
-.empty p{font-size:14px;line-height:1.8}
-
-/* FAB */
-.fab{
-  position:fixed;
-  bottom:calc(var(--tab-h) + 14px);
-  right:20px;
-  width:52px;height:52px;border-radius:26px;
-  background:var(--accent);color:#fff;
-  font-size:28px;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 28px rgba(0,0,0,.22);
-  z-index:25;line-height:1;
-  transition:all .18s;
-}
-.fab:active{transform:scale(.90);box-shadow:0 2px 12px rgba(0,0,0,.15)}
-.fab.hide{opacity:0;pointer-events:none;transform:scale(.8) translateY(10px)}
-
-/* ─── TABS ─── */
-.tabs{
-  position:fixed;bottom:0;left:0;right:0;
-  background:rgba(255,255,255,.96);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  border-top:1px solid var(--border);
-  display:flex;
-  height:var(--tab-h);
-  padding-bottom:var(--sb);
-  z-index:27;
-}
-.tab{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:3px;font-size:10px;font-weight:500;
-  color:var(--text3);transition:color .15s;
-  padding-top:6px;letter-spacing:.2px;
-}
-.tab.on{color:var(--accent)}
-.tab-icon{font-size:21px;line-height:1}
-
-/* ─── STATS PAGE ─── */
-.stats-page{display:none;padding:14px}
-.stats-page.show{display:block}
-
-.stat-hero{
-  background:var(--accent);
-  border-radius:var(--r);
-  padding:22px 22px 20px;
-  margin-bottom:12px;
-  position:relative;overflow:hidden;
-}
-.stat-hero::after{
-  content:"";position:absolute;
-  right:-20px;top:-30px;
-  width:120px;height:120px;border-radius:60px;
-  background:rgba(255,255,255,.05);
-}
-.stat-hero-label{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:6px;letter-spacing:.3px}
-.stat-hero-val{font-size:32px;font-weight:600;color:#fff;letter-spacing:-.5px}
-.stat-hero-sub{
-  margin-top:14px;display:flex;gap:20px;
-  font-size:13px;color:rgba(255,255,255,.6);
-}
-.stat-hero-sub b{color:rgba(255,255,255,.9);font-weight:500}
-
-.stat-section-title{
-  font-size:12px;font-weight:500;color:var(--text3);
-  letter-spacing:.5px;text-transform:uppercase;
-  margin:20px 0 10px;
-}
-
-.stat-list{
-  background:var(--surface);border-radius:var(--r);
-  border:1px solid var(--border);overflow:hidden;
-}
-.stat-row{
-  display:flex;align-items:center;
-  padding:14px 16px;
-  border-bottom:1px solid var(--border);
-  gap:14px;
-}
-.stat-row:last-child{border-bottom:none}
-.stat-em{font-size:22px;width:32px;text-align:center;flex-shrink:0}
-.stat-info{flex:1;min-width:0}
-.stat-name{font-size:15px;font-weight:500}
-.stat-sub{font-size:12px;color:var(--text3);margin-top:2px}
-.stat-right{text-align:right;flex-shrink:0}
-.stat-val{font-size:15px;font-weight:600}
-.stat-cnt{font-size:12px;color:var(--text3);margin-top:2px}
-
-.stat-bar-wrap{margin-top:6px;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden}
-.stat-bar{height:3px;border-radius:2px;background:var(--accent);transition:width .5s cubic-bezier(.25,.74,.22,1)}
-
-/* ─── OVERLAY + SHEET ─── */
-.ov{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.4);
-  z-index:100;
-  display:flex;align-items:flex-end;justify-content:center;
-  opacity:0;pointer-events:none;
-  transition:opacity .25s;
-}
-.ov.show{opacity:1;pointer-events:auto}
-.sheet{
-  background:var(--surface);
-  border-radius:24px 24px 0 0;
-  width:100%;max-height:92vh;
-  overflow-y:auto;
-  padding:0 20px calc(20px + var(--sb));
-  transform:translateY(100%);
-  transition:transform .32s cubic-bezier(.25,.74,.22,1);
-}
-.ov.show .sheet{transform:translateY(0)}
-.sh-handle{
-  width:36px;height:4px;
-  background:var(--border2);border-radius:2px;
-  margin:12px auto 18px;
-}
-.sh-title{font-size:19px;font-weight:600;margin-bottom:18px;letter-spacing:-.3px}
-
-/* Photo zone */
-.photo-zone{
-  width:100%;aspect-ratio:4/3;
-  border-radius:14px;
-  background:var(--surface2);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:8px;
-  position:relative;overflow:hidden;
-  margin-bottom:16px;
-  border:1px solid var(--border);
-}
-.photo-zone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.pz-icon{font-size:26px;position:relative;z-index:1}
-.pz-hint{font-size:13px;color:var(--text2);position:relative;z-index:1}
-.photo-zone input{position:absolute;inset:0;opacity:0;width:100%;height:100%;z-index:2}
-.retake-btn{
-  position:absolute;bottom:10px;right:10px;
-  background:rgba(0,0,0,.5);color:#fff;
-  font-size:12px;padding:5px 12px;border-radius:20px;z-index:3;
-}
-
-/* Form rows */
-.fblock{
-  background:var(--surface2);border-radius:var(--r);
-  border:1px solid var(--border);overflow:hidden;
-  margin-bottom:12px;
-}
-.frow{
-  display:flex;align-items:center;min-height:50px;
-  border-bottom:1px solid var(--border);
-  padding:0 16px;gap:12px;
-}
-.frow:last-child{border-bottom:none}
-.flabel{font-size:14px;color:var(--text2);width:72px;flex-shrink:0}
-.finput{
-  flex:1;font-size:15px;color:var(--text);
-  text-align:right;border:none;background:none;padding:0;
-}
-.finput::placeholder{color:var(--text3)}
-.fselect{
-  flex:1;font-size:15px;color:var(--text);
-  text-align:right;border:none;background:none;
-  -webkit-appearance:none;direction:rtl;
-}
-.fselect option{direction:ltr}
-.cat-mgr-link{font-size:12px;color:var(--blue);white-space:nowrap}
-
-/* Cost type tabs */
-.ctabs{display:flex;gap:5px;flex:1;justify-content:flex-end}
-.ctab{
-  padding:5px 12px;border-radius:8px;
-  font-size:13px;font-weight:500;
-  transition:all .15s;
-}
-.ctab.on{background:var(--accent);color:#fff}
-.ctab:not(.on){background:var(--border);color:var(--text2)}
-
-/* Action buttons */
-.brow{display:flex;gap:10px;margin-top:16px}
-.btn{
-  flex:1;padding:14px;border-radius:14px;
-  font-size:16px;font-weight:600;
-  text-align:center;transition:all .12s;
-}
-.btn:active{transform:scale(.97)}
-.btn-cancel{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.btn-ok{background:var(--accent);color:#fff}
-.btn-del{background:var(--red-bg);color:var(--red)}
-
-/* ─── DETAIL SHEET ─── */
-.det-photo{
-  width:100%;border-radius:16px;aspect-ratio:1;
-  background:var(--surface2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:64px;margin-bottom:16px;overflow:hidden;
-  border:1px solid var(--border);
-}
-.det-photo img{width:100%;height:100%;object-fit:cover}
-.det-name{font-size:22px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px}
-.det-cost{
-  font-size:28px;font-weight:600;color:var(--blue);
-  margin-bottom:16px;letter-spacing:-.5px;
-}
-.det-block{
-  background:var(--surface2);border-radius:var(--r);
-  border:1px solid var(--border);overflow:hidden;
-  margin-bottom:12px;
-}
-.det-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:13px 16px;border-bottom:1px solid var(--border);
-  font-size:14px;
-}
-.det-row:last-child{border-bottom:none}
-.det-row .k{color:var(--text2)}
-.det-row .v{font-weight:500;text-align:right;max-width:60%}
-.use-plus-btn{
-  background:var(--blue-bg);color:var(--blue);
-  padding:5px 12px;border-radius:8px;font-size:13px;font-weight:600;
-}
-
-/* Cat manage */
-.cat-item{
-  display:flex;align-items:center;
-  padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;
-  font-size:15px;
-}
-.cat-item:last-child{border-bottom:none}
-.cat-em{font-size:20px;width:28px;text-align:center}
-.cat-del{color:var(--red);font-size:20px;margin-left:auto;width:32px;text-align:center}
-.cat-add-row{display:flex;gap:10px;margin-top:14px}
-.cat-inp{
-  flex:1;padding:12px 14px;border-radius:12px;
-  background:var(--surface2);border:1px solid var(--border);
-  font-size:15px;color:var(--text);transition:border-color .2s;
-}
-.cat-inp:focus{border-color:var(--border2)}
-.cat-inp::placeholder{color:var(--text3)}
-.cat-add-btn{
-  padding:12px 18px;border-radius:12px;
-  background:var(--accent);color:#fff;font-size:15px;font-weight:600;
-  white-space:nowrap;
-}
-
-/* Sort sheet */
-.sort-option{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:15px 16px;border-bottom:1px solid var(--border);
-  font-size:15px;cursor:pointer;
-}
-.sort-option:last-child{border-bottom:none}
-.sort-check{color:var(--blue);font-size:16px;font-weight:700}
-
-/* Page transitions */
-#page-items{display:block}
-#page-stats{display:none}
-
-/* Animate in */
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.icard{animation:fadeUp .22s ease both}
+/* 全局 Loading */
+.loading-mask { position: fixed; inset: 0; background: rgba(255,255,255,.8); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; font-weight: 600; color: var(--accent); backdrop-filter: blur(5px); }
+.loading-mask.show { display: flex; }
+.spinner { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="hdr" id="hdr">
-  <div id="hdr-normal">
-    <div class="hdr-row">
-      <div class="hdr-left">
-        <div class="hdr-title" id="hdr-title">全部物品</div>
-        <div class="hdr-sub">
-          <span id="s-count">0 件</span>
-          <span class="hdr-dot"></span>
-          <span id="s-daily">¥0.00 / 天</span>
-        </div>
-      </div>
-      <div class="hdr-actions">
-        <button class="hdr-icon-btn" id="search-toggle-btn" title="搜索">🔍</button>
-        <button class="hdr-text-btn" id="edit-mode-btn">编辑</button>
-      </div>
-    </div>
-    <div class="search-wrap" id="search-wrap">
-      <div class="search-inner">
-        <span class="search-icon">🔍</span>
-        <input class="search-inp" id="search-inp" placeholder="搜索物品…" type="search">
-        <button class="search-x" id="search-clear">×</button>
-      </div>
-    </div>
+<div class="loading-mask" id="loading">
+  <div class="spinner"></div>
+  <span id="loading-text">加载中...</span>
+</div>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">物品管理</div>
+    <div class="hdr-sub" id="hdr-sub">共 0 件物品</div>
   </div>
-  <div class="hdr-sel" id="hdr-sel">
-    <div class="hdr-sel-title">已选 <span id="sel-count">0</span> 件</div>
-    <div class="hdr-sel-actions">
-      <button id="sel-all-btn" style="color:var(--blue);font-size:14px;font-weight:500">全选</button>
-      <button id="sel-cancel-btn" style="color:var(--text2);font-size:14px;font-weight:500">取消</button>
-    </div>
-  </div>
+  <button onclick="fetchItems()" style="font-size: 20px;">🔄</button>
 </div>
 
-<!-- Chips -->
-<div id="chips-bar-wrap">
-  <div class="chips-bar">
-    <div class="chips-scroll" id="chips"></div>
-  </div>
-  <div class="sort-row">
-    <button class="sort-btn" id="sort-open-btn">
-      <span id="sort-label">默认</span>
-      <span class="sort-arrow">▾</span>
-    </button>
-  </div>
-</div>
+<div id="grid" class="grid"></div>
 
-<!-- Pages -->
-<div id="page-items">
-  <div class="grid" id="grid"></div>
-</div>
+<button class="fab" onclick="openForm()">+</button>
 
-<div id="page-stats">
-  <div class="stats-page show" id="stats-content"></div>
-</div>
-
-<!-- FAB -->
-<button class="fab" id="fab">+</button>
-
-<!-- Select bottom bar -->
-<div class="sel-bar" id="sel-bar">
-  <button class="sel-all-btn" id="sel-all-btn2">全选</button>
-  <button class="sel-del-btn" id="sel-del-btn" disabled>删除所选</button>
-</div>
-
-<!-- Tabs -->
-<div class="tabs">
-  <button class="tab on" id="tab-items" onclick="switchTab('items')">
-    <span class="tab-icon">🗂️</span>物品
-  </button>
-  <button class="tab" id="tab-stats" onclick="switchTab('stats')">
-    <span class="tab-icon">📊</span>统计
-  </button>
-</div>
-
-<!-- ── ADD / EDIT SHEET ── -->
-<div class="ov" id="ov-form">
+<div class="ov" id="ov-form" onclick="if(event.target===this) hide('ov-form')">
   <div class="sheet">
     <div class="sh-handle"></div>
-    <div class="sh-title" id="form-title">添加物品</div>
-
+    <h3 id="form-title" style="font-size: 20px;">添加新物品</h3>
+    
     <div class="photo-zone" id="photo-zone">
-      <div class="pz-icon">📷</div>
-      <div class="pz-hint">拍照或从相册选取</div>
+      <div style="font-size: 32px; margin-bottom: 8px;">📷</div>
+      <div style="font-size: 13px; color: var(--text3);">点击拍照或选择相册</div>
       <input type="file" accept="image/*" id="file-inp">
-      <button class="retake-btn" id="retake-btn" style="display:none" onclick="retakePhoto(event)">重拍</button>
+      <img id="preview-img" src="" style="display:none;">
     </div>
 
     <div class="fblock">
       <div class="frow">
         <span class="flabel">名称</span>
-        <input class="finput" id="f-name" placeholder="物品名称" type="text">
+        <input class="finput" id="f-name" type="text" placeholder="输入物品名称">
+      </div>
+      <div class="frow">
+        <span class="flabel">价格 (¥)</span>
+        <input class="finput" id="f-price" type="number" placeholder="0.00" inputmode="decimal">
       </div>
       <div class="frow">
         <span class="flabel">分类</span>
-        <select class="fselect" id="f-cat"></select>
-        <button class="cat-mgr-link" onclick="openCatMgr()">管理</button>
-      </div>
-      <div class="frow">
-        <span class="flabel">价格 ¥</span>
-        <input class="finput" id="f-price" placeholder="0.00" type="number" inputmode="decimal">
-      </div>
-      <div class="frow">
-        <span class="flabel">购入日期</span>
-        <input class="finput" id="f-date" type="date">
-      </div>
-      <div class="frow">
-        <span class="flabel">计费方式</span>
-        <div class="ctabs">
-          <button class="ctab on" data-t="day">按天</button>
-          <button class="ctab" data-t="use">按次</button>
-          <button class="ctab" data-t="kg">按 kg</button>
-        </div>
-      </div>
-      <div class="frow" id="use-row" style="display:none">
-        <span class="flabel">已用次数</span>
-        <input class="finput" id="f-use" placeholder="1" type="number" inputmode="numeric">
-      </div>
-      <div class="frow">
-        <span class="flabel">备注</span>
-        <input class="finput" id="f-note" placeholder="选填" type="text">
+        <input class="finput" id="f-cat" type="text" placeholder="如: 电子、衣柜、护肤">
       </div>
     </div>
 
-    <div class="brow">
+    <div style="display: flex; gap: 12px; margin-top: 8px;">
       <button class="btn btn-cancel" onclick="hide('ov-form')">取消</button>
-      <button class="btn btn-ok" id="form-ok">添加</button>
+      <button class="btn btn-primary" onclick="saveItem()">保存物品</button>
     </div>
   </div>
 </div>
 
-<!-- ── DETAIL SHEET ── -->
-<div class="ov" id="ov-det">
-  <div class="sheet">
-    <div class="sh-handle"></div>
-    <div id="det-body"></div>
-  </div>
-</div>
-
-<!-- ── CATEGORY MANAGE SHEET ── -->
-<div class="ov" id="ov-cat">
-  <div class="sheet">
-    <div class="sh-handle"></div>
-    <div class="sh-title">管理分类</div>
-    <div class="fblock" id="cat-list"></div>
-    <div class="cat-add-row">
-      <input class="cat-inp" id="cat-new-inp" placeholder="新建分类名称">
-      <button class="cat-add-btn" id="cat-add-btn">添加</button>
+<div class="ov" id="ov-det" onclick="if(event.target===this) hide('ov-det')">
+  <div class="sheet" id="det-body">
     </div>
-    <div class="brow" style="margin-top:14px">
-      <button class="btn btn-ok" onclick="hide('ov-cat');populateCatSelect()">完成</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── SORT SHEET ── -->
-<div class="ov" id="ov-sort">
-  <div class="sheet">
-    <div class="sh-handle"></div>
-    <div class="sh-title">排序方式</div>
-    <div class="fblock" id="sort-list"></div>
-    <div class="brow" style="margin-top:14px">
-      <button class="btn btn-ok" onclick="hide('ov-sort')">完成</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── DELETE CONFIRM ── -->
-<div class="ov" id="ov-del">
-  <div class="sheet">
-    <div class="sh-handle"></div>
-    <div class="sh-title" id="del-title">确认删除</div>
-    <p style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px" id="del-msg">确定要删除这件物品吗？</p>
-    <div class="brow">
-      <button class="btn btn-cancel" onclick="hide('ov-del')">取消</button>
-      <button class="btn btn-del" id="del-confirm-btn">删除</button>
-    </div>
-  </div>
 </div>
 
 <script>
-/* ── DATA ── */
-const DEF_CATS=["电子设备","护肤品","日用品","衣柜","消耗品","宠物","其他"];
-const EM={"电子设备":"📱","护肤品":"🧴","日用品":"🏠","衣柜":"👗","消耗品":"🛒","宠物":"🐾","其他":"📦"};
-const UNIT={day:"/天",use:"/次",kg:"/kg"};
-const SORTS=[
-  {k:"default",l:"默认（最新）"},
-  {k:"costHigh",l:"成本从高到低"},
-  {k:"costLow",l:"成本从低到高"},
-  {k:"priceHigh",l:"价格从高到低"},
-  {k:"priceLow",l:"价格从低到高"},
-  {k:"name",l:"名称 A→Z"}
-];
+// ================= Bmob 后端配置 =================
+const APP_ID = "ecd704dd1d7fe06136bde12f599ca2ac";
+const API_KEY = "9062a2dd58ec8d05b81bc6a0ef62ba15";
+const API_BASE = "https://api.bmob.cn/1/classes/WupinItem"; 
+const FILE_API = "https://api.bmob.cn/2/files/";
 
-let items=[],cats=[],curCat="全部",curCostT="day",newPhoto=null,editId=null;
-let selMode=false,selectedIds=new Set();
-let searchQ="",sortK="default",activeTab="items";
-let pendingDelId=null,pendingDelIds=null;
+let currentItems = [];
+let uploadFileObj = null;
 
-/* ── LOAD / SAVE ── */
-function load(){
-  try{items=JSON.parse(localStorage.getItem("iv4")||"[]")}catch{items=[]}
-  try{cats=JSON.parse(localStorage.getItem("cv4")||"null")}catch{cats=null}
-  if(!cats)cats=[...DEF_CATS];
-  if(!items.length)items=demo();
-}
-function save(){
-  localStorage.setItem("iv4",JSON.stringify(items));
-  localStorage.setItem("cv4",JSON.stringify(cats));
+// 通用 HTTP 请求头
+function getHeaders(isFile = false) {
+    let h = {
+        "X-Bmob-Application-Id": APP_ID,
+        "X-Bmob-REST-API-Key": API_KEY,
+    };
+    if (!isFile) h["Content-Type"] = "application/json";
+    return h;
 }
 
-/* ── COST ── */
-function daysAgo(d){return Math.max(1,Math.floor((Date.now()-new Date(d))/86400000))}
-function cost(it){
-  if(it.costType==="day")return it.price/daysAgo(it.purchaseDate);
-  if(it.costType==="use")return it.price/Math.max(1,it.useCount||1);
-  return it.price;
-}
-function fmtCost(it){return"¥"+cost(it).toFixed(2)+(UNIT[it.costType]||"/天")}
-function em(it){return EM[it.category]||"📦"}
+// ================= 网络请求与数据处理 =================
 
-/* ── RENDER ── */
-function filtered(){
-  let list=items.filter(it=>{
-    if(curCat!=="全部"&&it.category!==curCat)return false;
-    if(searchQ&&!it.name.toLowerCase().includes(searchQ.toLowerCase()))return false;
-    return true;
-  });
-  if(sortK==="costHigh")list.sort((a,b)=>cost(b)-cost(a));
-  else if(sortK==="costLow")list.sort((a,b)=>cost(a)-cost(b));
-  else if(sortK==="priceHigh")list.sort((a,b)=>b.price-a.price);
-  else if(sortK==="priceLow")list.sort((a,b)=>a.price-b.price);
-  else if(sortK==="name")list.sort((a,b)=>a.name.localeCompare(b.name));
-  return list;
+// 1. 获取物品列表
+async function fetchItems() {
+    showLoading("正在同步数据...");
+    try {
+        // 按创建时间倒序排列
+        const res = await fetch(API_BASE + "?order=-createdAt", { headers: getHeaders() });
+        const data = await res.json();
+        currentItems = data.results || [];
+        renderGrid();
+    } catch (err) {
+        alert("网络请求失败，请检查网络或刷新页面。");
+        console.error(err);
+    }
+    hideLoading();
 }
 
-function render(){
-  renderChips();
-  const list=filtered();
-  const totalCost=items.reduce((s,it)=>s+cost(it),0);
-  document.getElementById("s-count").textContent=items.length+" 件";
-  document.getElementById("s-daily").textContent="¥"+totalCost.toFixed(2)+" / 天";
+// 2. 保存物品 (带图片上传逻辑)
+async function saveItem() {
+    const name = document.getElementById("f-name").value.trim();
+    const price = Number(document.getElementById("f-price").value) || 0;
+    const cat = document.getElementById("f-cat").value.trim() || "未分类";
 
-  const g=document.getElementById("grid");
-  if(!list.length){
-    g.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><p>${searchQ?"没有找到相关物品":"这里还没有物品\n点击 + 开始添加"}</p></div>`;
-    return;
-  }
-  g.innerHTML=list.map((it,i)=>{
-    const img=it.photo?`<img src="${it.photo}" alt="">`:"";
-    const sel=selectedIds.has(it.id);
-    return`<div class="icard${sel?" selected":""}" onclick="cardClick('${it.id}')" style="animation-delay:${Math.min(i*.03,.3)}s">
-      <div class="icard-img">${img||em(it)}</div>
-      <div class="icard-body">
-        <div class="icard-name">${it.name}</div>
-        <div class="icard-cost">${fmtCost(it)}</div>
-      </div>
-      <div class="sel-check${sel?" on":""}"></div>
-      <div class="sel-ring"></div>
-    </div>`;
-  }).join("");
+    if (!name) return alert("请填写物品名称！");
 
-  if(selMode)document.getElementById("grid").classList.add("select-mode");
+    showLoading("正在保存...");
+    try {
+        let photoUrl = "";
+        
+        // 如果用户选择了新图片，先调用 Bmob 文件上传接口
+        if (uploadFileObj) {
+            showLoading("正在上传图片...");
+            // Bmob 要求文件名进行 URL 编码
+            const safeFileName = encodeURIComponent(uploadFileObj.name || "image.jpg");
+            const fileRes = await fetch(FILE_API + safeFileName, {
+                method: "POST",
+                headers: { ...getHeaders(true), "Content-Type": uploadFileObj.type || "image/jpeg" },
+                body: uploadFileObj
+            });
+            const fileData = await fileRes.json();
+            if (fileData.url) photoUrl = fileData.url;
+        }
+
+        // 构建存入数据库的 JSON 数据
+        let payload = { name, price, category: cat };
+        if (photoUrl) payload.photo = photoUrl; 
+
+        // 插入到 WupinItem 表中
+        await fetch(API_BASE, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        hide("ov-form");
+        fetchItems(); // 保存成功后刷新列表
+    } catch (err) {
+        alert("保存失败，请稍后重试！");
+        console.error(err);
+    }
+    hideLoading();
 }
 
-function renderChips(){
-  const allCats=["全部",...cats];
-  document.getElementById("chips").innerHTML=
-    allCats.map(c=>`<button class="chip${c===curCat?" on":""}" onclick="setCat('${c}')">${c}</button>`).join("")+
-    `<button class="chip-mgr" onclick="openCatMgr()">⊕</button>`;
+// 3. 删除物品
+async function deleteItem(objectId) {
+    if(!confirm("确定要彻底删除这件物品吗？")) return;
+    
+    showLoading("正在删除...");
+    try {
+        await fetch(`${API_BASE}/${objectId}`, {
+            method: "DELETE",
+            headers: getHeaders()
+        });
+        hide("ov-det");
+        fetchItems(); // 删除成功后刷新列表
+    } catch (err) {
+        alert("删除失败！");
+    }
+    hideLoading();
 }
 
-function setCat(c){curCat=c;render()}
-function cardClick(id){
-  if(selMode){toggleSel(id)}
-  else{openDet(id)}
-}
+// ================= 界面渲染与交互 =================
 
-/* ── SELECT MODE ── */
-function toggleSel(id){
-  if(selectedIds.has(id))selectedIds.delete(id);
-  else selectedIds.add(id);
-  document.getElementById("sel-count").textContent=selectedIds.size;
-  document.getElementById("sel-del-btn").disabled=selectedIds.size===0;
-  render();
-}
-function enterSelMode(){
-  selMode=true;
-  document.getElementById("hdr-normal").style.display="none";
-  document.getElementById("hdr-sel").classList.add("show");
-  document.getElementById("sel-bar").classList.add("show");
-  document.getElementById("fab").classList.add("hide");
-  document.getElementById("grid").classList.add("select-mode");
-  document.getElementById("edit-mode-btn").textContent="完成";
-}
-function exitSelMode(){
-  selMode=false;selectedIds.clear();
-  document.getElementById("hdr-normal").style.display="";
-  document.getElementById("hdr-sel").classList.remove("show");
-  document.getElementById("sel-bar").classList.remove("show");
-  document.getElementById("fab").classList.remove("hide");
-  document.getElementById("grid").classList.remove("select-mode");
-  document.getElementById("edit-mode-btn").textContent="编辑";
-  document.getElementById("sel-count").textContent="0";
-  document.getElementById("sel-del-btn").disabled=true;
-  render();
-}
+// 渲染网格列表
+function renderGrid() {
+    document.getElementById("hdr-sub").textContent = `共 ${currentItems.length} 件物品`;
+    const g = document.getElementById("grid");
+    
+    if(!currentItems.length) {
+        g.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text3);">暂无物品数据<br>点击右下角 + 开始记录</div>`;
+        return;
+    }
 
-document.getElementById("edit-mode-btn").addEventListener("click",()=>{
-  if(selMode)exitSelMode();else enterSelMode();
-});
-document.getElementById("sel-cancel-btn").addEventListener("click",exitSelMode);
-document.getElementById("sel-all-btn").addEventListener("click",()=>{
-  const list=filtered();
-  if(selectedIds.size===list.length){selectedIds.clear()}
-  else{list.forEach(it=>selectedIds.add(it.id))}
-  document.getElementById("sel-count").textContent=selectedIds.size;
-  document.getElementById("sel-del-btn").disabled=selectedIds.size===0;
-  render();
-});
-document.getElementById("sel-all-btn2").addEventListener("click",()=>{
-  const list=filtered();
-  list.forEach(it=>selectedIds.add(it.id));
-  document.getElementById("sel-count").textContent=selectedIds.size;
-  document.getElementById("sel-del-btn").disabled=false;
-  render();
-});
-document.getElementById("sel-del-btn").addEventListener("click",()=>{
-  if(!selectedIds.size)return;
-  const ids=[...selectedIds];
-  pendingDelIds=ids;pendingDelId=null;
-  document.getElementById("del-title").textContent="确认删除";
-  document.getElementById("del-msg").textContent=`确定删除选中的 ${ids.length} 件物品吗？此操作无法撤销。`;
-  show("ov-del");
-});
-
-/* ── SEARCH ── */
-document.getElementById("search-toggle-btn").addEventListener("click",()=>{
-  const w=document.getElementById("search-wrap");
-  w.classList.toggle("show");
-  if(w.classList.contains("show"))document.getElementById("search-inp").focus();
-  else{searchQ="";document.getElementById("search-inp").value="";render();}
-});
-document.getElementById("search-inp").addEventListener("input",e=>{searchQ=e.target.value;render()});
-document.getElementById("search-clear").addEventListener("click",()=>{
-  searchQ="";document.getElementById("search-inp").value="";render();
-  document.getElementById("search-inp").focus();
-});
-
-/* ── SORT ── */
-document.getElementById("sort-open-btn").addEventListener("click",()=>{
-  document.getElementById("sort-list").innerHTML=SORTS.map(s=>
-    `<div class="sort-option" onclick="setSort('${s.k}')">
-      <span>${s.l}</span>
-      ${sortK===s.k?`<span class="sort-check">✓</span>`:""}
-    </div>`).join("");
-  show("ov-sort");
-});
-function setSort(k){
-  sortK=k;
-  document.getElementById("sort-label").textContent=SORTS.find(s=>s.k===k)?.l||"默认";
-  render();hide("ov-sort");
-}
-
-/* ── FAB ── */
-document.getElementById("fab").addEventListener("click",()=>openForm(null));
-
-/* ── PHOTO ── */
-document.getElementById("file-inp").addEventListener("change",function(){
-  const f=this.files[0];if(!f)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    newPhoto=e.target.result;
-    const pz=document.getElementById("photo-zone");
-    let img=pz.querySelector("img");
-    if(!img){img=document.createElement("img");pz.appendChild(img)}
-    img.src=newPhoto;
-    pz.querySelector(".pz-icon").style.display="none";
-    pz.querySelector(".pz-hint").style.display="none";
-    document.getElementById("retake-btn").style.display="";
-  };
-  // Compress image
-  const canvas=document.createElement("canvas");
-  const imgEl=new Image();
-  imgEl.onload=()=>{
-    const MAX=800;
-    let w=imgEl.width,h=imgEl.height;
-    if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX}else{w=Math.round(w*MAX/h);h=MAX}}
-    canvas.width=w;canvas.height=h;
-    canvas.getContext("2d").drawImage(imgEl,0,0,w,h);
-    newPhoto=canvas.toDataURL("image/jpeg",.75);
-    const pz=document.getElementById("photo-zone");
-    let img=pz.querySelector("img");
-    if(!img){img=document.createElement("img");pz.appendChild(img)}
-    img.src=newPhoto;
-    pz.querySelector(".pz-icon").style.display="none";
-    pz.querySelector(".pz-hint").style.display="none";
-    document.getElementById("retake-btn").style.display="";
-  };
-  imgEl.src=e.target.result;
-  reader.readAsDataURL(f);
-});
-function retakePhoto(e){
-  e.stopPropagation();
-  newPhoto=null;
-  const pz=document.getElementById("photo-zone");
-  const img=pz.querySelector("img");if(img)img.remove();
-  pz.querySelector(".pz-icon").style.display="";
-  pz.querySelector(".pz-hint").style.display="";
-  document.getElementById("retake-btn").style.display="none";
-  document.getElementById("file-inp").value="";
-}
-
-/* ── COST TYPE TABS ── */
-document.querySelectorAll(".ctab").forEach(b=>{
-  b.addEventListener("click",()=>{
-    curCostT=b.dataset.t;
-    document.querySelectorAll(".ctab").forEach(x=>x.classList.toggle("on",x===b));
-    document.getElementById("use-row").style.display=curCostT==="use"?"flex":"none";
-  });
-});
-
-/* ── FORM ── */
-function openForm(it){
-  editId=it?it.id:null;
-  newPhoto=it?.photo||null;
-  const pz=document.getElementById("photo-zone");
-  const eImg=pz.querySelector("img");if(eImg)eImg.remove();
-  pz.querySelector(".pz-icon").style.display="";
-  pz.querySelector(".pz-hint").style.display="";
-  document.getElementById("retake-btn").style.display="none";
-  document.getElementById("file-inp").value="";
-  if(newPhoto){
-    const img=document.createElement("img");img.src=newPhoto;pz.appendChild(img);
-    pz.querySelector(".pz-icon").style.display="none";
-    pz.querySelector(".pz-hint").style.display="none";
-    document.getElementById("retake-btn").style.display="";
-  }
-  document.getElementById("f-name").value=it?.name||"";
-  document.getElementById("f-price").value=it?.price||"";
-  document.getElementById("f-date").value=it?.purchaseDate||new Date().toISOString().slice(0,10);
-  document.getElementById("f-use").value=it?.useCount||"";
-  document.getElementById("f-note").value=it?.note||"";
-  curCostT=it?.costType||"day";
-  document.querySelectorAll(".ctab").forEach(b=>b.classList.toggle("on",b.dataset.t===curCostT));
-  document.getElementById("use-row").style.display=curCostT==="use"?"flex":"none";
-  document.getElementById("form-title").textContent=it?"编辑物品":"添加物品";
-  document.getElementById("form-ok").textContent=it?"保存":"添加";
-  populateCatSelect(it?.category);
-  show("ov-form");
-}
-
-function populateCatSelect(sel){
-  const s=document.getElementById("f-cat");
-  s.innerHTML=cats.map(c=>`<option value="${c}"${c===sel?" selected":""}>${c}</option>`).join("");
-}
-
-document.getElementById("form-ok").addEventListener("click",()=>{
-  const name=document.getElementById("f-name").value.trim();
-  const price=parseFloat(document.getElementById("f-price").value)||0;
-  const dt=document.getElementById("f-date").value;
-  const cat=document.getElementById("f-cat").value;
-  const uc=parseInt(document.getElementById("f-use").value)||1;
-  const note=document.getElementById("f-note").value.trim();
-  if(!name){document.getElementById("f-name").focus();return}
-  if(editId){
-    const idx=items.findIndex(i=>i.id===editId);
-    if(idx>=0)items[idx]={...items[idx],name,category:cat,photo:newPhoto,price,purchaseDate:dt,costType:curCostT,useCount:uc,note};
-  }else{
-    items.unshift({id:Date.now().toString(),name,category:cat,photo:newPhoto,price,purchaseDate:dt,costType:curCostT,useCount:uc,note});
-  }
-  save();hide("ov-form");render();
-});
-
-/* ── DETAIL ── */
-function openDet(id){
-  const it=items.find(i=>i.id===id);if(!it)return;
-  const ph=it.photo
-    ?`<div class="det-photo"><img src="${it.photo}" alt=""></div>`
-    :`<div class="det-photo">${em(it)}</div>`;
-  const ucRow=it.costType==="use"
-    ?`<div class="det-row"><span class="k">使用次数</span>
-       <div style="display:flex;align-items:center;gap:8px">
-         <span class="v" id="uc-d">${it.useCount||1} 次</span>
-         <button class="use-plus-btn" onclick="addUse('${id}')">+ 1 次</button>
-       </div></div>`:"";
-  const dRow=it.costType==="day"
-    ?`<div class="det-row"><span class="k">已使用</span><span class="v">${daysAgo(it.purchaseDate)} 天</span></div>`:"";
-  const noteRow=it.note?`<div class="det-row"><span class="k">备注</span><span class="v">${it.note}</span></div>`:"";
-
-  document.getElementById("det-body").innerHTML=`
-    ${ph}
-    <div class="det-name">${it.name}</div>
-    <div class="det-cost" id="det-cost">${fmtCost(it)}</div>
-    <div class="det-block">
-      <div class="det-row"><span class="k">分类</span><span class="v">${it.category}</span></div>
-      <div class="det-row"><span class="k">购入价格</span><span class="v">¥${it.price.toLocaleString()}</span></div>
-      <div class="det-row"><span class="k">购入日期</span><span class="v">${it.purchaseDate}</span></div>
-      ${dRow}${ucRow}${noteRow}
-    </div>
-    <div class="brow">
-      <button class="btn btn-del" onclick="confirmDel('${id}')">删除</button>
-      <button class="btn btn-cancel" onclick="editItem('${id}')">编辑</button>
-      <button class="btn btn-ok" onclick="hide('ov-det')">关闭</button>
-    </div>`;
-  show("ov-det");
-}
-
-function editItem(id){hide("ov-det");editId=id;const it=items.find(i=>i.id===id);if(it)openForm(it)}
-
-function addUse(id){
-  const it=items.find(i=>i.id===id);if(!it)return;
-  it.useCount=(it.useCount||1)+1;save();render();
-  const d=document.getElementById("uc-d");if(d)d.textContent=it.useCount+" 次";
-  const c=document.getElementById("det-cost");if(c)c.textContent=fmtCost(it);
-}
-
-function confirmDel(id){
-  pendingDelId=id;pendingDelIds=null;
-  const it=items.find(i=>i.id===id);
-  document.getElementById("del-title").textContent="删除物品";
-  document.getElementById("del-msg").textContent=`确定删除「${it?.name}」吗？此操作无法撤销。`;
-  show("ov-del");
-}
-
-document.getElementById("del-confirm-btn").addEventListener("click",()=>{
-  if(pendingDelIds){
-    items=items.filter(i=>!pendingDelIds.includes(i.id));
-    exitSelMode();
-  }else if(pendingDelId){
-    items=items.filter(i=>i.id!==pendingDelId);
-    hide("ov-det");
-  }
-  save();render();hide("ov-del");
-  pendingDelId=null;pendingDelIds=null;
-});
-
-/* ── CATEGORY MANAGE ── */
-function openCatMgr(){renderCatList();document.getElementById("cat-new-inp").value="";show("ov-cat")}
-function renderCatList(){
-  document.getElementById("cat-list").innerHTML=cats.map((c,i)=>`
-    <div class="cat-item">
-      <span class="cat-em">${EM[c]||"🏷️"}</span>
-      <span style="flex:1;font-size:15px">${c}</span>
-      <button class="cat-del" onclick="delCat(${i})">×</button>
-    </div>`).join("");
-}
-document.getElementById("cat-add-btn").addEventListener("click",()=>{
-  const v=document.getElementById("cat-new-inp").value.trim();
-  if(!v||cats.includes(v))return;
-  cats.push(v);save();renderCatList();render();
-  document.getElementById("cat-new-inp").value="";
-});
-function delCat(i){
-  const c=cats[i];
-  if(items.some(it=>it.category===c)){
-    document.getElementById("del-title").textContent="无法删除";
-    document.getElementById("del-msg").textContent=`「${c}」分类下还有物品，请先移动或删除这些物品后再试。`;
-    pendingDelId=null;pendingDelIds=null;
-    document.getElementById("del-confirm-btn").style.display="none";
-    show("ov-del");
-    setTimeout(()=>document.getElementById("del-confirm-btn").style.display="",300);
-    return;
-  }
-  cats.splice(i,1);save();renderCatList();render();
-  if(curCat===c)curCat="全部";
-}
-
-/* ── STATS ── */
-function renderStats(){
-  const totalCost=items.reduce((s,it)=>s+cost(it),0);
-  const totalPrice=items.reduce((s,it)=>s+it.price,0);
-  const catMap={};
-  items.forEach(it=>{
-    if(!catMap[it.category])catMap[it.category]={cost:0,price:0,count:0};
-    catMap[it.category].cost+=cost(it);
-    catMap[it.category].price+=it.price;
-    catMap[it.category].count++;
-  });
-  const catList=Object.entries(catMap).sort((a,b)=>b[1].cost-a[1].cost);
-  const maxCost=catList[0]?.[1]?.cost||1;
-
-  document.getElementById("stats-content").innerHTML=`
-    <div class="stat-hero">
-      <div class="stat-hero-label">每日综合成本</div>
-      <div class="stat-hero-val">¥${totalCost.toFixed(2)} / 天</div>
-      <div class="stat-hero-sub">
-        <span>共 <b>${items.length}</b> 件</span>
-        <span>总价值 <b>¥${totalPrice.toLocaleString()}</b></span>
-      </div>
-    </div>
-
-    <div class="stat-section-title">按分类</div>
-    <div class="stat-list">
-      ${catList.map(([cat,d])=>`
-        <div class="stat-row">
-          <div class="stat-em">${EM[cat]||"📦"}</div>
-          <div class="stat-info">
-            <div class="stat-name">${cat}</div>
-            <div class="stat-bar-wrap">
-              <div class="stat-bar" style="width:${Math.round(d.cost/maxCost*100)}%"></div>
+    g.innerHTML = currentItems.map(it => `
+        <div class="icard" onclick="openDet('${it.objectId}')">
+            <div class="icard-img">
+                ${it.photo ? `<img src="${it.photo}">` : '📦'}
             </div>
-          </div>
-          <div class="stat-right">
-            <div class="stat-val">¥${d.cost.toFixed(2)}/天</div>
-            <div class="stat-cnt">${d.count} 件 · ¥${d.price.toLocaleString()}</div>
-          </div>
-        </div>`).join("")}
-    </div>
-
-    <div class="stat-section-title">最高日成本 Top 5</div>
-    <div class="stat-list">
-      ${[...items].sort((a,b)=>cost(b)-cost(a)).slice(0,5).map(it=>`
-        <div class="stat-row">
-          <div class="stat-em">${em(it)}</div>
-          <div class="stat-info">
-            <div class="stat-name">${it.name}</div>
-            <div class="stat-sub">${it.category}</div>
-          </div>
-          <div class="stat-right">
-            <div class="stat-val" style="color:var(--blue)">${fmtCost(it)}</div>
-            <div class="stat-cnt">¥${it.price.toLocaleString()}</div>
-          </div>
-        </div>`).join("")}
-    </div>
-
-    <div class="stat-section-title">最物有所值 Top 5</div>
-    <div class="stat-list">
-      ${[...items].sort((a,b)=>cost(a)-cost(b)).slice(0,5).map(it=>`
-        <div class="stat-row">
-          <div class="stat-em">${em(it)}</div>
-          <div class="stat-info">
-            <div class="stat-name">${it.name}</div>
-            <div class="stat-sub">${it.category}</div>
-          </div>
-          <div class="stat-right">
-            <div class="stat-val" style="color:var(--green)">${fmtCost(it)}</div>
-            <div class="stat-cnt">¥${it.price.toLocaleString()}</div>
-          </div>
-        </div>`).join("")}
-    </div>
-  `;
+            <div class="icard-body">
+                <div class="icard-name">${it.name}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="icard-cost">¥${it.price}</span>
+                    <span class="icard-cat">${it.category || '未分类'}</span>
+                </div>
+            </div>
+        </div>
+    `).join("");
 }
 
-/* ── TABS ── */
-function switchTab(t){
-  activeTab=t;
-  document.getElementById("page-items").style.display=t==="items"?"block":"none";
-  document.getElementById("page-stats").style.display=t==="stats"?"block":"none";
-  document.getElementById("chips-bar-wrap").style.display=t==="items"?"block":"none";
-  document.getElementById("fab").style.display=t==="items"?"flex":"none";
-  document.getElementById("tab-items").classList.toggle("on",t==="items");
-  document.getElementById("tab-stats").classList.toggle("on",t==="stats");
-  document.getElementById("hdr-title").textContent=t==="items"?"全部物品":"统计";
-  document.getElementById("edit-mode-btn").style.display=t==="items"?"":"none";
-  document.getElementById("search-toggle-btn").style.display=t==="items"?"":"none";
-  if(t==="stats")renderStats();
-}
+// 图片选择与本地预览
+document.getElementById("file-inp").addEventListener("change", function(e) {
+    const file = this.files[0];
+    if (!file) return;
+    uploadFileObj = file; 
 
-/* ── OVERLAYS ── */
-function show(id){document.getElementById(id).classList.add("show")}
-function hide(id){document.getElementById(id).classList.remove("show")}
-["ov-form","ov-det","ov-cat","ov-sort","ov-del"].forEach(id=>{
-  document.getElementById(id).addEventListener("click",function(e){if(e.target===this)hide(id)});
+    const reader = new FileReader();
+    reader.onload = e => {
+        const imgEl = document.getElementById("preview-img");
+        imgEl.src = e.target.result;
+        imgEl.style.display = "block";
+    };
+    reader.readAsDataURL(file);
 });
 
-/* ── DEMO DATA ── */
-function demo(){
-  const ago=d=>{const r=new Date();r.setDate(r.getDate()-d);return r.toISOString().slice(0,10)};
-  return[
-    {id:"d1",name:"iPhone 16 Pro",category:"电子设备",photo:null,price:8999,purchaseDate:ago(180),costType:"day",useCount:1,note:""},
-    {id:"d2",name:"Apple Watch S10",category:"电子设备",photo:null,price:2999,purchaseDate:ago(60),costType:"day",useCount:1,note:""},
-    {id:"d3",name:"AirPods Pro 2",category:"电子设备",photo:null,price:1799,purchaseDate:ago(120),costType:"day",useCount:1,note:""},
-    {id:"d4",name:"白色羊绒大衣",category:"衣柜",photo:null,price:1280,purchaseDate:ago(140),costType:"use",useCount:23,note:"特别保暖"},
-    {id:"d5",name:"绿色针织衫",category:"衣柜",photo:null,price:398,purchaseDate:ago(95),costType:"use",useCount:12,note:""},
-    {id:"d6",name:"浅灰牛仔裤",category:"衣柜",photo:null,price:268,purchaseDate:ago(70),costType:"use",useCount:38,note:""},
-    {id:"d7",name:"YSL 气垫",category:"护肤品",photo:null,price:680,purchaseDate:ago(50),costType:"use",useCount:18,note:""},
-    {id:"d8",name:"理肤泉 B5 面膜",category:"护肤品",photo:null,price:168,purchaseDate:ago(30),costType:"use",useCount:28,note:""},
-    {id:"d9",name:"自动猫砂盆",category:"宠物",photo:null,price:899,purchaseDate:ago(163),costType:"day",useCount:1,note:""},
-    {id:"d10",name:"宠物喂食器",category:"宠物",photo:null,price:389,purchaseDate:ago(163),costType:"day",useCount:1,note:""},
-    {id:"d11",name:"鹅绒羽绒服",category:"衣柜",photo:null,price:1280,purchaseDate:ago(150),costType:"use",useCount:40,note:""},
-    {id:"d12",name:"皮质双肩包",category:"衣柜",photo:null,price:580,purchaseDate:ago(105),costType:"use",useCount:210,note:""},
-  ];
-}
-
-load();render();
-</script>
-</body>
-</html>
+// 打开添加表单
+function openForm()
