@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<title>物品管理</title>
+<style>
+/* 保持你原本的基础 UI 风格，精简了容易引起错位的属性 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --surface2:#f2f1ed; --border:#e8e6e0;
+  --text:#1a1917; --text2:#6b6860; --text3:#aeacaa; --accent:#2d2d2b;
+  --blue:#3b6fff; --red:#e84040; --red-bg:#fff0f0;
+  --r:16px; --tab-h:70px;
+}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);padding-bottom:100px;font-size:15px;}
+button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit;}
+input,select{font-family:inherit;outline:none;}
+
+/* 头部 */
+.hdr{background:rgba(247,246,242,.94);backdrop-filter:blur(20px);padding:14px 20px 12px;position:sticky;top:0;z-index:30;border-bottom:1px solid var(--border);}
+.hdr-title{font-size:24px;font-weight:600;}
+.hdr-sub{font-size:13px;color:var(--text3);margin-top:4px;}
+
+/* 网格与卡片 */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px;}
+.icard{background:var(--surface);border-radius:var(--r);overflow:hidden;border:1px solid var(--border);position:relative;display:flex;flex-direction:column;}
+.icard-img{width:100%;aspect-ratio:1;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;position:relative;}
+.icard-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.icard-body{padding:8px;font-size:12px;}
+.icard-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.icard-cost{color:var(--text2);margin-top:2px;}
+
+/* 悬浮按钮与底部 */
+.fab{position:fixed;bottom:90px;right:20px;width:52px;height:52px;border-radius:26px;background:var(--accent);color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:25;}
+.tabs{position:fixed;bottom:0;left:0;right:0;height:var(--tab-h);background:#fff;border-top:1px solid var(--border);display:flex;z-index:27;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--text3);}
+
+/* 表单与弹窗 */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;}
+.ov.show{opacity:1;pointer-events:auto;}
+.sheet{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px;transform:translateY(100%);transition:transform .3s;}
+.ov.show .sheet{transform:translateY(0);}
+.fblock{background:var(--surface2);border-radius:var(--r);padding:10px;}
+.frow{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.frow:last-child{border-bottom:none;}
+.flabel{width:80px;color:var(--text2);}
+.finput{flex:1;text-align:right;border:none;background:none;font-size:15px;}
+.photo-zone{width:100%;aspect-ratio:4/3;background:var(--surface2);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;margin-bottom:16px;overflow:hidden;}
+.photo-zone img{width:100%;height:100%;object-fit:cover;position:absolute;}
+.photo-zone input{position:absolute;inset:0;opacity:0;}
+.btn{width:100%;padding:14px;border-radius:14px;font-size:16px;font-weight:600;background:var(--accent);color:#fff;margin-top:16px;}
+.btn-del{background:var(--red-bg);color:var(--red);}
+.btn-cancel{background:var(--surface2);color:var(--text);margin-top:10px;}
+
+/* Loading 层 */
+.loading-mask{position:fixed;inset:0;background:rgba(255,255,255,.7);z-index:999;display:none;align-items:center;justify-content:center;font-weight:bold;color:var(--blue);}
+.loading-mask.show{display:flex;}
+</style>
+</head>
+<body>
+
+<div class="loading-mask" id="loading">处理中，请稍候...</div>
+
+<div class="hdr">
+  <div class="hdr-title">全部物品</div>
+  <div class="hdr-sub" id="hdr-sub">加载中...</div>
+</div>
+
+<div id="grid" class="grid"></div>
+<button class="fab" onclick="openForm()">+</button>
+
+<div class="ov" id="ov-form" onclick="if(event.target===this) hide('ov-form')">
+  <div class="sheet">
+    <h3 style="margin-bottom:16px" id="form-title">添加物品</h3>
+    <div class="photo-zone" id="photo-zone">
+      <span style="font-size:24px">📷</span>
+      <span style="font-size:12px;color:#666">点击拍照或上传</span>
+      <input type="file" accept="image/*" id="file-inp">
+      <img id="preview-img" src="" style="display:none;">
+    </div>
+    <div class="fblock">
+      <div class="frow">
+        <span class="flabel">名称</span>
+        <input class="finput" id="f-name" type="text" placeholder="输入物品名称">
+      </div>
+      <div class="frow">
+        <span class="flabel">分类</span>
+        <input class="finput" id="f-cat" type="text" placeholder="如: 电子设备、护肤品" value="日常">
+      </div>
+      <div class="frow">
+        <span class="flabel">价格 ¥</span>
+        <input class="finput" id="f-price" type="number" placeholder="0.00">
+      </div>
+    </div>
+    <button class="btn" onclick="saveItem()">保存物品</button>
+    <button class="btn btn-cancel" onclick="hide('ov-form')">取消</button>
+  </div>
+</div>
+
+<div class="ov" id="ov-det" onclick="if(event.target===this) hide('ov-det')">
+  <div class="sheet" id="det-body"></div>
+</div>
+
+<script>
+// ================= 配置你的后端密钥 =================
+const APP_ID = "ecd704dd1d7fe06136bde12f599ca2ac";
+const API_KEY = "9062a2dd58ec8d05b81bc6a0ef62ba15";
+// 根据你提供的信息，如果开启了安全码限制，把下面改成你的安全码；如果没有开启，留空即可
+const SAFE_CODE = ""; 
+
+const API_BASE = "https://api.bmob.cn/1/classes/WupinItem"; 
+const FILE_API = "https://api.bmob.cn/2/files/";
+
+let currentItems = [];
+let editObjectId = null;
+let uploadFileObj = null;
+
+// 通用请求头
+function getHeaders(isFile = false) {
+    let h = {
+        "X-Bmob-Application-Id": APP_ID,
+        "X-Bmob-REST-API-Key": API_KEY,
+    };
+    if (SAFE_CODE) h["X-Bmob-Safe-Code"] = SAFE_CODE;
+    if (!isFile) h["Content-Type"] = "application/json";
+    return h;
+}
+
+// ================= 核心网络请求逻辑 =================
+
+// 获取所有物品
+async function fetchItems() {
+    showLoading();
+    try {
+        const res = await fetch(API_BASE + "?order=-createdAt", { headers: getHeaders() });
+        const data = await res.json();
+        currentItems = data.results || [];
+        render();
+    } catch (err) {
+        alert("获取数据失败，请检查网络或密钥配置");
+        console.error(err);
+    }
+    hideLoading();
+}
+
+// 保存物品 (新增 / 更新)
+async function saveItem() {
+    const name = document.getElementById("f-name").value.trim();
+    const price = Number(document.getElementById("f-price").value) || 0;
+    const cat = document.getElementById("f-cat").value.trim();
+
+    if (!name) return alert("物品名称不能为空！");
+
+    showLoading();
+    try {
+        let photoUrl = "";
+        
+        // 1. 如果选择了新图片，先上传图片
+        if (uploadFileObj) {
+            const fileRes = await fetch(FILE_API + encodeURIComponent(uploadFileObj.name), {
+                method: "POST",
+                headers: { ...getHeaders(true), "Content-Type": uploadFileObj.type },
+                body: uploadFileObj
+            });
+            const fileData = await fileRes.json();
+            if (fileData.url) photoUrl = fileData.url;
+        }
+
+        // 2. 准备入库数据
+        let payload = { name, price, category: cat };
+        if (photoUrl) payload.photo = photoUrl; // 只有新传了照片才更新照片字段
+
+        // 3. 执行新增或更新
+        const url = editObjectId ? `${API_BASE}/${editObjectId}` : API_BASE;
+        const method = editObjectId ? "PUT" : "POST";
+
+        await fetch(url, {
+            method: method,
+            headers: getHeaders(),
+            body: JSON.stringify(payload)
+        });
+
+        hide("ov-form");
+        fetchItems(); // 重新拉取最新数据
+    } catch (err) {
+        alert("保存失败，请重试！");
+        console.error(err);
+    }
+    hideLoading();
+}
+
+// 删除物品
+async function deleteItem(objectId) {
+    if(!confirm("确定要删除这件物品吗？此操作无法撤销。")) return;
+    
+    showLoading();
+    try {
+        await fetch(`${API_BASE}/${objectId}`, {
+            method: "DELETE",
+            headers: getHeaders()
+        });
+        hide("ov-det");
+        fetchItems();
+    } catch (err) {
+        alert("删除失败！");
+    }
+    hideLoading();
+}
+
+// ================= UI 交互逻辑 =================
+
+function render() {
+    document.getElementById("hdr-sub").textContent = `共 ${currentItems.length} 件`;
+    const g = document.getElementById("grid");
+    
+    if(!currentItems.length) {
+        g.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px 0;color:#999;">这里空空如也，点击右下角 + 添加物品</div>`;
+        return;
+    }
+
+    g.innerHTML = currentItems.map(it => `
+        <div class="icard" onclick="openDet('${it.objectId}')">
+            <div class="icard-img">
+                ${it.photo ? `<img src="${it.photo}">` : '📦'}
+            </div>
+            <div class="icard-body">
+                <div class="icard-name">${it.name}</div>
+                <div class="icard-cost">¥${it.price}</div>
+            </div>
+        </div>
+    `).join("");
+}
+
+// 处理图片选择和本地预览
+document.getElementById("file-inp").addEventListener("change", function(e) {
+    const file = this.files[0];
+    if (!file) return;
+    uploadFileObj = file; // 存入全局变量等待上传
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        const imgEl = document.getElementById("preview-img");
+        imgEl.src = e.target.result;
+        imgEl.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+});
+
+function openForm(objectId = null) {
+    editObjectId = objectId;
+    uploadFileObj = null;
+    document.getElementById("file-inp").value = "";
+    document.getElementById("preview-img").style.display = "none";
+    document.getElementById("preview-img").src = "";
+    
+    if (objectId) {
+        document.getElementById("form-title").textContent = "编辑物品";
+        const it = currentItems.find(i => i.objectId === objectId);
+        document.getElementById("f-name").value = it.name || "";
+        document.getElementById("f-price").value = it.price || "";
+        document.getElementById("f-cat").value = it.category || "日常";
+        if(it.photo) {
+            document.getElementById("preview-img").src = it.photo;
+            document.getElementById("preview-img").style.display = "block";
+        }
+    } else {
+        document.getElementById("form-title").textContent = "添加物品";
+        document.getElementById("f-name").value = "";
+        document.getElementById("f-price").value = "";
+        document.getElementById("f-cat").value = "日常";
+    }
+    show("ov-form");
+}
+
+function openDet(objectId) {
+    const it = currentItems.find(i => i.objectId === objectId);
+    if(!it) return;
+
+    document.getElementById("det-body").innerHTML = `
+        <div class="photo-zone" style="margin-bottom:20px;">
+             ${it.photo ? `<img src="${it.photo}">` : '<span style="font-size:50px">📦</span>'}
+        </div>
+        <h2 style="margin-bottom:8px">${it.name}</h2>
+        <h1 style="color:var(--blue);margin-bottom:20px">¥${it.price}</h1>
+        <div class="fblock" style="margin-bottom:20px; font-size:14px;">
+            <div class="frow"><span class="flabel">分类</span><span>${it.category || '未分类'}</span></div>
+            <div class="frow"><span class="flabel">添加时间</span><span>${new Date(it.createdAt).toLocaleDateString()}</span></div>
+        </div>
+        <button class="btn btn-cancel" onclick="openForm('${it.objectId}'); hide('ov-det')">✏️ 编辑信息</button>
+        <button class="btn btn-del" onclick="deleteItem('${it.objectId}')">🗑️ 删除物品</button>
+        <button class="btn btn-cancel" style="border:none;" onclick="hide('ov-det')">关闭</button>
+    `;
+    show("ov-det");
+}
+
+function show(id) { document.getElementById(id).classList.add("show"); }
+function hide(id) { document.getElementById(id).classList.remove("show"); }
+function showLoading() { document.getElementById("loading").classList.add("show"); }
+function hideLoading() { document.getElementById("loading").classList.remove("show"); }
+
+// 页面加载完成后立即去后端获取数据
+window.onload = fetchItems;
+</script>
+</body>
+</html>
