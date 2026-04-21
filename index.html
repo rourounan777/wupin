@@ -719,7 +719,7 @@ function setSort(k){
 
 document.getElementById("fab").addEventListener("click",()=>openForm(null));
 
-/* ── 核心图片压缩转文本 (极限压缩版，完美避开 40KB 限制) ── */
+/* ── 核心图片压缩转文本 (动态卡点 38KB 高清极限版) ── */
 document.getElementById("file-inp").addEventListener("change",function(){
   const f=this.files[0];if(!f)return;
   
@@ -727,26 +727,53 @@ document.getElementById("file-inp").addEventListener("change",function(){
   reader.onload=e=>{
     const imgEl = new Image();
     imgEl.onload = () => {
-      // 1. 将分辨率从 600 大幅降低到 250 (这已经足够在手机屏幕的方块里看清了)
-      const MAX = 250;
+      // 初始设定：最高给到 800 分辨率，画质 0.8
+      let max_size = 800; 
+      let quality = 0.8;
+      
       let w = imgEl.width, h = imgEl.height;
-      if(w > MAX || h > MAX){
-        if(w > h){ h = Math.round(h*MAX/w); w = MAX; }
-        else { w = Math.round(w*MAX/h); h = MAX; }
+      if(w > max_size || h > max_size){
+        if(w > h){ h = Math.round(h*max_size/w); w = max_size; }
+        else { w = Math.round(w*max_size/h); h = max_size; }
       }
+      
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(imgEl, 0, 0, w, h);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0, w, h);
       
-      // 2. 将画质从 0.6 进一步压缩到 0.4
-      newPhoto = canvas.toDataURL("image/jpeg", 0.4);
+      let resultBase64 = canvas.toDataURL("image/jpeg", quality);
+      
+      // 核心魔法：如果超标，就在后台循环往下压，直到刚好卡进 Bmob 的 40KB 限制内！
+      // 38000 字符的 base64 约等于 28KB，留一点空间给 JSON 的文字数据
+      let attempt = 0;
+      while(resultBase64.length > 38000 && attempt < 10) {
+         quality -= 0.15; // 每次降低一点画质
+         if(quality < 0.1) quality = 0.1;
+         
+         // 如果画质已经很低了还是超标，就缩小图片尺寸
+         if(quality <= 0.35) {
+             max_size *= 0.8;
+             w = imgEl.width; h = imgEl.height;
+             if(w > max_size || h > max_size){
+                if(w > h){ h = Math.round(h*max_size/w); w = max_size; }
+                else { w = Math.round(w*max_size/h); h = max_size; }
+             }
+             canvas.width = w; canvas.height = h;
+             ctx.drawImage(imgEl, 0, 0, w, h);
+         }
+         resultBase64 = canvas.toDataURL("image/jpeg", quality);
+         attempt++;
+      }
 
-      // 3. 终极保护：如果压缩后还是逼近 Bmob 的 40KB 极限，直接弹窗提示，不让它卡死
-      if (newPhoto.length > 35000) {
-        alert("图片细节太复杂，压缩后仍超出了免费版的 40KB 限制！\n请尝试离远一点拍，或者换一张色彩纯净的照片。");
+      // 如果压了 10 次还不行（极小概率），给个友好提示
+      if (resultBase64.length > 40000) {
+        alert("这张照片颜色细节太复杂了！请稍微离远一点拍，或者拍背景干净一点的照片~");
         document.getElementById("file-inp").value="";
         return;
       }
+      
+      newPhoto = resultBase64; // 最终得到卡点极限的高清 Base64
       
       const pz=document.getElementById("photo-zone");
       let img=pz.querySelector("img");
@@ -760,6 +787,17 @@ document.getElementById("file-inp").addEventListener("change",function(){
   };
   reader.readAsDataURL(f);
 });
+
+function retakePhoto(e){
+  e.stopPropagation();
+  newPhoto=null;
+  const pz=document.getElementById("photo-zone");
+  const img=pz.querySelector("img");if(img)img.remove();
+  pz.querySelector(".pz-icon").style.display="";
+  pz.querySelector(".pz-hint").style.display="";
+  document.getElementById("retake-btn").style.display="none";
+  document.getElementById("file-inp").value="";
+}
 
 function retakePhoto(e){
   e.stopPropagation();
