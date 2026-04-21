@@ -719,7 +719,7 @@ function setSort(k){
 
 document.getElementById("fab").addEventListener("click",()=>openForm(null));
 
-/* ── 核心图片压缩转文本 ── */
+/* ── 核心图片压缩转文本 (极限压缩版，完美避开 40KB 限制) ── */
 document.getElementById("file-inp").addEventListener("change",function(){
   const f=this.files[0];if(!f)return;
   
@@ -727,7 +727,8 @@ document.getElementById("file-inp").addEventListener("change",function(){
   reader.onload=e=>{
     const imgEl = new Image();
     imgEl.onload = () => {
-      const MAX = 600;
+      // 1. 将分辨率从 600 大幅降低到 250 (这已经足够在手机屏幕的方块里看清了)
+      const MAX = 250;
       let w = imgEl.width, h = imgEl.height;
       if(w > MAX || h > MAX){
         if(w > h){ h = Math.round(h*MAX/w); w = MAX; }
@@ -737,7 +738,15 @@ document.getElementById("file-inp").addEventListener("change",function(){
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(imgEl, 0, 0, w, h);
       
-      newPhoto = canvas.toDataURL("image/jpeg", 0.6);
+      // 2. 将画质从 0.6 进一步压缩到 0.4
+      newPhoto = canvas.toDataURL("image/jpeg", 0.4);
+
+      // 3. 终极保护：如果压缩后还是逼近 Bmob 的 40KB 极限，直接弹窗提示，不让它卡死
+      if (newPhoto.length > 35000) {
+        alert("图片细节太复杂，压缩后仍超出了免费版的 40KB 限制！\n请尝试离远一点拍，或者换一张色彩纯净的照片。");
+        document.getElementById("file-inp").value="";
+        return;
+      }
       
       const pz=document.getElementById("photo-zone");
       let img=pz.querySelector("img");
