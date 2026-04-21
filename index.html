@@ -58,6 +58,7 @@ input,select,textarea{font-family:inherit;outline:none}
 }
 .hdr-text-btn:active{background:var(--blue-bg)}
 
+/* 修复搜索框重合问题 */
 .search-wrap{margin-top:10px;display:none}
 .search-wrap.show{display:block}
 .search-inner{
@@ -66,9 +67,16 @@ input,select,textarea{font-family:inherit;outline:none}
 }
 .search-inner:focus-within{background:var(--surface);border-color:var(--border2)}
 .search-icon{font-size:14px;color:var(--text3);flex-shrink:0}
-.search-inp{flex:1;padding:10px 0;font-size:15px;background:none;border:none;color:var(--text);}
+.search-inp{
+  flex:1; min-width:0; /* 强制防止输入框撑破父容器 */
+  padding:10px 0; font-size:15px; background:none; border:none; color:var(--text);
+}
 .search-inp::placeholder{color:var(--text3)}
-.search-x{font-size:18px;color:var(--text3);padding:4px;line-height:1}
+.search-x{
+  font-size:18px; color:var(--text3); padding:8px; line-height:1; 
+  flex-shrink:0; /* 防止 x 被挤压 */
+  margin-right:-8px; /* 增大点击热区 */
+}
 
 .hdr-sel{display:none;align-items:center;justify-content:space-between;padding-top:6px}
 .hdr-sel.show{display:flex}
@@ -217,7 +225,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .sh-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 18px;}
 .sh-title{font-size:19px;font-weight:600;margin-bottom:18px;letter-spacing:-.3px}
 
-/* ── 彻底修复表单挤压和对齐的终极 CSS ── */
+/* ── FORM ── */
 .photo-zone{
   width:100%;aspect-ratio:4/3;border-radius:14px;background:var(--surface2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
@@ -252,7 +260,6 @@ input,select,textarea{font-family:inherit;outline:none}
   width:100%; font-size:15px; color:var(--text); text-align:right;
   border:none; background:transparent; outline:none; -webkit-appearance:none; padding:0;
 }
-/* 强力修正 iOS 日期控件对齐 */
 input[type="date"].finput {
   display: flex; justify-content: flex-end; align-items: center; text-align: right; width: 100%;
 }
@@ -319,7 +326,7 @@ input[type="date"].finput {
   <div id="hdr-normal">
     <div class="hdr-row">
       <div class="hdr-left">
-        <div class="hdr-title" id="hdr-title">全部物品</div>
+        <div class="hdr-title" id="hdr-title">肥猫世家</div>
         <div class="hdr-sub">
           <span id="s-count">0 件</span>
           <span class="hdr-dot"></span>
@@ -530,7 +537,7 @@ let selMode=false,selectedIds=new Set();
 let searchQ="",sortK="default",activeTab="items";
 let pendingDelId=null,pendingDelIds=null;
 
-/* ── 修复导致死机的语法错误 ── */
+/* ── 加载数据 ── */
 async function load(){
   try {
     cats = JSON.parse(localStorage.getItem("cv4") || "null");
@@ -719,7 +726,7 @@ function setSort(k){
 
 document.getElementById("fab").addEventListener("click",()=>openForm(null));
 
-/* ── 核心图片压缩转文本 ── */
+/* ── 核心图片压缩转文本 (动态卡点版) ── */
 document.getElementById("file-inp").addEventListener("change",function(){
   const f=this.files[0];if(!f)return;
   
@@ -727,17 +734,48 @@ document.getElementById("file-inp").addEventListener("change",function(){
   reader.onload=e=>{
     const imgEl = new Image();
     imgEl.onload = () => {
-      const MAX = 600;
+      let max_size = 800; 
+      let quality = 0.8;
+      
       let w = imgEl.width, h = imgEl.height;
-      if(w > MAX || h > MAX){
-        if(w > h){ h = Math.round(h*MAX/w); w = MAX; }
-        else { w = Math.round(w*MAX/h); h = MAX; }
+      if(w > max_size || h > max_size){
+        if(w > h){ h = Math.round(h*max_size/w); w = max_size; }
+        else { w = Math.round(w*max_size/h); h = max_size; }
       }
+      
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(imgEl, 0, 0, w, h);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0, w, h);
       
-      newPhoto = canvas.toDataURL("image/jpeg", 0.6);
+      let resultBase64 = canvas.toDataURL("image/jpeg", quality);
+      
+      let attempt = 0;
+      while(resultBase64.length > 38000 && attempt < 10) {
+         quality -= 0.15; 
+         if(quality < 0.1) quality = 0.1;
+         
+         if(quality <= 0.35) {
+             max_size *= 0.8;
+             w = imgEl.width; h = imgEl.height;
+             if(w > max_size || h > max_size){
+                if(w > h){ h = Math.round(h*max_size/w); w = max_size; }
+                else { w = Math.round(w*max_size/h); h = max_size; }
+             }
+             canvas.width = w; canvas.height = h;
+             ctx.drawImage(imgEl, 0, 0, w, h);
+         }
+         resultBase64 = canvas.toDataURL("image/jpeg", quality);
+         attempt++;
+      }
+
+      if (resultBase64.length > 40000) {
+        alert("这张照片颜色细节太复杂了！请稍微离远一点拍，或者拍背景干净一点的照片~");
+        document.getElementById("file-inp").value="";
+        return;
+      }
+      
+      newPhoto = resultBase64; 
       
       const pz=document.getElementById("photo-zone");
       let img=pz.querySelector("img");
@@ -771,7 +809,7 @@ document.querySelectorAll(".ctab").forEach(b=>{
   });
 });
 
-/* ── FORM 数据加载与防挤压逻辑 ── */
+/* ── FORM ── */
 function openForm(it){
   editId = it ? it.id : null;
   newPhoto = (it && it.photo) ? it.photo : null;
@@ -1045,7 +1083,8 @@ function switchTab(t){
   document.getElementById("fab").style.display=t==="items"?"flex":"none";
   document.getElementById("tab-items").classList.toggle("on",t==="items");
   document.getElementById("tab-stats").classList.toggle("on",t==="stats");
-  document.getElementById("hdr-title").textContent=t==="items"?"全部物品":"统计";
+  // 切换回物品栏时，标题仍然是肥猫世家
+  document.getElementById("hdr-title").textContent=t==="items"?"肥猫世家":"统计";
   document.getElementById("edit-mode-btn").style.display=t==="items"?"":"none";
   document.getElementById("search-toggle-btn").style.display=t==="items"?"":"none";
   if(t==="stats")renderStats();
