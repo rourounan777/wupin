@@ -6,41 +6,32 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>物品</title>
+
+<script>
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    alert("系统检测到崩溃！\n错误: " + msg + "\n行号: " + lineNo);
+    return false;
+  };
+</script>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 
 :root{
-  --bg:#f7f6f2;
-  --surface:#ffffff;
-  --surface2:#f2f1ed;
-  --border:#e8e6e0;
-  --border2:#d8d6cf;
-  --text:#1a1917;
-  --text2:#6b6860;
-  --text3:#aeacaa;
-  --accent:#2d2d2b;
-  --blue:#3b6fff;
-  --blue-bg:#eef2ff;
-  --red:#e84040;
-  --red-bg:#fff0f0;
-  --green:#2d8a4e;
-  --green-bg:#edf7f1;
-  --r:16px;
-  --r-sm:10px;
-  --sb:env(safe-area-inset-bottom,20px);
-  --st:env(safe-area-inset-top,0px);
+  --bg:#f7f6f2; --surface:#ffffff; --surface2:#f2f1ed; --border:#e8e6e0; --border2:#d8d6cf;
+  --text:#1a1917; --text2:#6b6860; --text3:#aeacaa; --accent:#2d2d2b;
+  --blue:#3b6fff; --blue-bg:#eef2ff; --red:#e84040; --red-bg:#fff0f0;
+  --green:#2d8a4e; --green-bg:#edf7f1; --r:16px; --r-sm:10px;
+  --sb:env(safe-area-inset-bottom,20px); --st:env(safe-area-inset-top,0px);
   --tab-h:calc(54px + var(--sb));
 }
 
 body{
   font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100dvh; 
-  padding-bottom:calc(var(--tab-h) + 16px);
-  font-size:15px;
+  background:var(--bg); color:var(--text); min-height:100vh; 
+  padding-bottom:calc(var(--tab-h) + 16px); font-size:15px;
 }
 
 button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit;transition:opacity .15s,transform .12s}
@@ -49,12 +40,8 @@ input,select,textarea{font-family:inherit;outline:none}
 
 /* ── HEADER ── */
 .hdr{
-  background:rgba(247,246,242,.94);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  padding:max(14px, env(safe-area-inset-top)) 20px 12px;
-  position:sticky;top:0;z-index:30;
-  border-bottom:1px solid var(--border);
+  background:rgba(247,246,242,.94); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  padding:calc(var(--st) + 14px) 20px 12px; position:sticky;top:0;z-index:30; border-bottom:1px solid var(--border);
 }
 .hdr-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .hdr-title{font-size:24px;font-weight:600;letter-spacing:-.5px;color:var(--text)}
@@ -62,26 +49,20 @@ input,select,textarea{font-family:inherit;outline:none}
 .hdr-dot{width:4px;height:4px;border-radius:2px;background:var(--border2);display:inline-block}
 .hdr-actions{display:flex;align-items:center;gap:4px;padding-top:2px}
 .hdr-icon-btn{
-  width:34px;height:34px;border-radius:17px;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--surface2);color:var(--text2);font-size:16px;
-  transition:background .15s;
+  width:34px;height:34px;border-radius:17px; display:flex;align-items:center;justify-content:center;
+  background:var(--surface2);color:var(--text2);font-size:16px; transition:background .15s;
 }
 .hdr-icon-btn:active{background:var(--border)}
 .hdr-text-btn{
-  font-size:14px;font-weight:500;color:var(--blue);
-  padding:6px 10px;border-radius:8px;
-  transition:background .15s;
+  font-size:14px;font-weight:500;color:var(--blue); padding:6px 10px;border-radius:8px; transition:background .15s;
 }
 .hdr-text-btn:active{background:var(--blue-bg)}
 
-/* Search & Select Mode */
 .search-wrap{margin-top:10px;display:none}
 .search-wrap.show{display:block}
 .search-inner{
-  display:flex;align-items:center;background:var(--surface2);
-  border-radius:12px;padding:0 12px;gap:8px;border:1px solid transparent;
-  transition:border-color .2s,background .2s;
+  display:flex;align-items:center;background:var(--surface2); border-radius:12px;padding:0 12px;gap:8px;
+  border:1px solid transparent; transition:border-color .2s,background .2s;
 }
 .search-inner:focus-within{background:var(--surface);border-color:var(--border2)}
 .search-icon{font-size:14px;color:var(--text3);flex-shrink:0}
@@ -97,8 +78,7 @@ input,select,textarea{font-family:inherit;outline:none}
 
 /* ── CHIPS ── */
 .chips-bar{
-  background:rgba(247,246,242,.94);
-  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  background:rgba(247,246,242,.94); backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   border-bottom:1px solid var(--border);
 }
 .chips-scroll{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;}
@@ -110,9 +90,8 @@ input,select,textarea{font-family:inherit;outline:none}
 .chip.on{background:var(--accent);color:#fff}
 .chip:not(.on){background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
 .chip-mgr{
-  flex-shrink:0;width:32px;height:32px;border-radius:16px;
-  background:var(--surface2);color:var(--text2);font-size:16px;
-  display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
+  flex-shrink:0;width:32px;height:32px;border-radius:16px; background:var(--surface2);color:var(--text2);
+  font-size:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
 }
 
 .sort-row{display:flex;align-items:center;justify-content:flex-end;padding:8px 16px 4px;}
@@ -123,14 +102,12 @@ input,select,textarea{font-family:inherit;outline:none}
 /* ── GRID ── */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px 16px;}
 .icard{
-  background:var(--surface);border-radius:var(--r);overflow:hidden;
-  border:1px solid var(--border);transition:transform .12s,box-shadow .12s;
-  cursor:pointer;position:relative;display:flex;flex-direction:column;
+  background:var(--surface);border-radius:var(--r);overflow:hidden; border:1px solid var(--border);
+  transition:transform .12s,box-shadow .12s; cursor:pointer;position:relative;display:flex;flex-direction:column;
 }
 .icard:active{transform:scale(.95);box-shadow:none}
 .icard-img{
-  width:100%;aspect-ratio:1;background:var(--surface2);
-  display:flex;align-items:center;justify-content:center;
+  width:100%;aspect-ratio:1;background:var(--surface2); display:flex;align-items:center;justify-content:center;
   font-size:32px;position:relative;overflow:hidden;
 }
 .icard-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
@@ -141,10 +118,9 @@ input,select,textarea{font-family:inherit;outline:none}
 }
 .icard-cost{font-size:11px;color:var(--text2);font-weight:400}
 
-/* Select Mode Checkboxes */
 .sel-ring{
-  position:absolute;inset:0;border-radius:var(--r);
-  border:2.5px solid var(--blue);opacity:0;transition:opacity .15s;pointer-events:none;z-index:4;
+  position:absolute;inset:0;border-radius:var(--r); border:2.5px solid var(--blue);opacity:0;
+  transition:opacity .15s;pointer-events:none;z-index:4;
 }
 .icard.selected .sel-ring{opacity:1}
 .sel-check{
@@ -157,16 +133,15 @@ input,select,textarea{font-family:inherit;outline:none}
 .select-mode .sel-check{display:flex}
 
 .sel-bar{
-  position:fixed;bottom:calc(var(--tab-h));left:0;right:0;
-  background:var(--surface);border-top:1px solid var(--border);
-  padding:10px 20px;display:none;align-items:center;gap:12px;
+  position:fixed;bottom:calc(var(--tab-h));left:0;right:0; background:var(--surface);
+  border-top:1px solid var(--border); padding:10px 20px;display:none;align-items:center;gap:12px;
   z-index:28;box-shadow:0 -4px 20px rgba(0,0,0,.07);
 }
 .sel-bar.show{display:flex}
 .sel-all-btn{font-size:14px;font-weight:500;color:var(--blue);flex-shrink:0}
 .sel-del-btn{
-  flex:1;background:var(--red-bg);color:var(--red);
-  padding:12px;border-radius:12px;font-size:15px;font-weight:600;text-align:center;
+  flex:1;background:var(--red-bg);color:var(--red); padding:12px;border-radius:12px;
+  font-size:15px;font-weight:600;text-align:center;
 }
 .sel-del-btn:disabled{opacity:.35}
 
@@ -242,7 +217,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .sh-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 18px;}
 .sh-title{font-size:19px;font-weight:600;margin-bottom:18px;letter-spacing:-.3px}
 
-/* ── ADD/EDIT FORM (彻底修复 UI 显示不全、日期对齐问题) ── */
+/* ── 彻底修复表单挤压和对齐的终极 CSS ── */
 .photo-zone{
   width:100%;aspect-ratio:4/3;border-radius:14px;background:var(--surface2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
@@ -261,39 +236,30 @@ input,select,textarea{font-family:inherit;outline:none}
   background:var(--surface2);border-radius:var(--r);
   border:1px solid var(--border);overflow:hidden;margin-bottom:12px;
 }
-/* 每一行的容器，确保左右两边分开 */
 .frow{
   display:flex;align-items:center;justify-content:space-between;
-  min-height:52px;border-bottom:1px solid var(--border);
-  padding:0 16px;gap:12px;
+  min-height:54px;border-bottom:1px solid var(--border);
+  padding:0 16px;gap:16px;
 }
 .frow:last-child{border-bottom:none}
-/* 左侧标题固定宽度，绝不缩水 */
 .flabel{
-  font-size:15px;color:var(--text2);flex-shrink:0;white-space:nowrap;font-weight:500;
+  font-size:15px;color:var(--text2);width:75px;flex-shrink:0;font-weight:500;
 }
-/* 右侧输入框的外层包裹，用来防挤压 */
 .finput-wrapper {
-  flex:1; display:flex; align-items:center; justify-content:flex-end; min-width:0; gap:8px;
+  flex:1; display:flex; align-items:center; justify-content:flex-end;
 }
-/* 输入框本体，强制脱掉 iOS 默认皮肤 */
 .finput, .fselect{
   width:100%; font-size:15px; color:var(--text); text-align:right;
-  border:none; background:transparent; outline:none; padding:0;
-  -webkit-appearance:none; border-radius:0;
+  border:none; background:transparent; outline:none; -webkit-appearance:none; padding:0;
 }
-.finput::placeholder{color:var(--text3)}
-/* 专门修理 iOS 的日期选择器 */
+/* 强力修正 iOS 日期控件对齐 */
 input[type="date"].finput {
-  display: flex; justify-content: flex-end; align-items: center;
+  display: flex; justify-content: flex-end; align-items: center; text-align: right; width: 100%;
 }
 
-.cat-mgr-link{font-size:13px;color:var(--blue);white-space:nowrap;font-weight:500;}
-
+.cat-mgr-link{font-size:13px;color:var(--blue);white-space:nowrap;font-weight:500;margin-left:8px;}
 .ctabs{display:flex;gap:6px;justify-content:flex-end}
-.ctab{
-  padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;transition:all .15s;
-}
+.ctab{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;transition:all .15s;}
 .ctab.on{background:var(--accent);color:#fff}
 .ctab:not(.on){background:var(--border);color:var(--text2)}
 
@@ -564,15 +530,19 @@ let selMode=false,selectedIds=new Set();
 let searchQ="",sortK="default",activeTab="items";
 let pendingDelId=null,pendingDelIds=null;
 
-/* ── 核心加载 ── */
+/* ── 修复导致死机的语法错误 ── */
 async function load(){
-  try{cats=JSON.parse(localStorage.getItem("cv4")||"null")}catch{cats=null}
-  if(!cats)cats=[...DEF_CATS];
+  try {
+    cats = JSON.parse(localStorage.getItem("cv4") || "null");
+  } catch (err) { 
+    cats = null; 
+  }
+  if(!cats) cats = [...DEF_CATS];
 
   try {
     const res = await fetch(API_BASE + "?order=-createdAt&limit=500", { headers: getHeaders() });
     const data = await res.json();
-    if(data.results) {
+    if(data && data.results) {
       items = data.results.map(it => ({
         id: it.objectId,
         name: it.name,
@@ -716,7 +686,7 @@ document.getElementById("sel-del-btn").addEventListener("click",()=>{
   const ids=[...selectedIds];
   pendingDelIds=ids;pendingDelId=null;
   document.getElementById("del-title").textContent="确认删除";
-  document.getElementById("del-msg").textContent=`确定删除选中的 ${ids.length} 件物品吗？此操作无法撤销。`;
+  document.getElementById("del-msg").textContent="确定删除选中的 " + ids.length + " 件物品吗？此操作无法撤销。";
   show("ov-del");
 });
 
@@ -742,13 +712,14 @@ document.getElementById("sort-open-btn").addEventListener("click",()=>{
 });
 function setSort(k){
   sortK=k;
-  document.getElementById("sort-label").textContent=SORTS.find(s=>s.k===k)?.l||"默认";
+  const foundSort = SORTS.find(s=>s.k===k);
+  document.getElementById("sort-label").textContent = foundSort ? foundSort.l : "默认";
   render();hide("ov-sort");
 }
 
 document.getElementById("fab").addEventListener("click",()=>openForm(null));
 
-/* ── 核心图片压缩转文本逻辑 ── */
+/* ── 核心图片压缩转文本 ── */
 document.getElementById("file-inp").addEventListener("change",function(){
   const f=this.files[0];if(!f)return;
   
@@ -800,10 +771,10 @@ document.querySelectorAll(".ctab").forEach(b=>{
   });
 });
 
-/* ── FORM ── */
+/* ── FORM 数据加载与防挤压逻辑 ── */
 function openForm(it){
-  editId=it?it.id:null;
-  newPhoto=it?.photo||null;
+  editId = it ? it.id : null;
+  newPhoto = (it && it.photo) ? it.photo : null;
 
   const pz=document.getElementById("photo-zone");
   const eImg=pz.querySelector("img");if(eImg)eImg.remove();
@@ -819,19 +790,19 @@ function openForm(it){
     document.getElementById("retake-btn").style.display="";
   }
 
-  document.getElementById("f-name").value=it?.name||"";
-  document.getElementById("f-price").value=it?.price||"";
-  document.getElementById("f-date").value=it?.purchaseDate||new Date().toISOString().slice(0,10);
-  document.getElementById("f-use").value=it?.useCount||"";
-  document.getElementById("f-note").value=it?.note||"";
-  curCostT=it?.costType||"day";
+  document.getElementById("f-name").value = (it && it.name) ? it.name : "";
+  document.getElementById("f-price").value = (it && it.price) ? it.price : "";
+  document.getElementById("f-date").value = (it && it.purchaseDate) ? it.purchaseDate : new Date().toISOString().slice(0,10);
+  document.getElementById("f-use").value = (it && it.useCount) ? it.useCount : "";
+  document.getElementById("f-note").value = (it && it.note) ? it.note : "";
+  curCostT = (it && it.costType) ? it.costType : "day";
   
   document.querySelectorAll(".ctab").forEach(b=>b.classList.toggle("on",b.dataset.t===curCostT));
-  document.getElementById("use-row").style.display=curCostT==="use"?"flex":"none";
-  document.getElementById("form-title").textContent=it?"编辑物品":"添加物品";
-  document.getElementById("form-ok").textContent=it?"保存物品";
+  document.getElementById("use-row").style.display = curCostT==="use"?"flex":"none";
+  document.getElementById("form-title").textContent = it ? "编辑物品" : "添加物品";
+  document.getElementById("form-ok").textContent = it ? "保存物品" : "添加物品";
   
-  populateCatSelect(it?.category);
+  populateCatSelect((it && it.category) ? it.category : null);
   show("ov-form");
 }
 
@@ -840,7 +811,7 @@ function populateCatSelect(sel){
   s.innerHTML=cats.map(c=>`<option value="${c}"${c===sel?" selected":""}>${c}</option>`).join("");
 }
 
-/* ── 直接保存文本图片到 Bmob ── */
+/* ── 保存文本图片到 Bmob ── */
 document.getElementById("form-ok").addEventListener("click", async ()=>{
   const name=document.getElementById("f-name").value.trim();
   const price=parseFloat(document.getElementById("f-price").value)||0;
@@ -858,26 +829,26 @@ document.getElementById("form-ok").addEventListener("click", async ()=>{
 
   try {
     const payload = {
-      name, price, category: cat, photo: newPhoto,
-      purchaseDate: dt, costType: curCostT, useCount: uc, note
+      name: name, price: price, category: cat, photo: newPhoto,
+      purchaseDate: dt, costType: curCostT, useCount: uc, note: note
     };
 
     let res;
     if(editId){
-      res = await fetch(`${API_BASE}/${editId}`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) });
+      res = await fetch(API_BASE + "/" + editId, { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) });
     }else{
       res = await fetch(API_BASE, { method: "POST", headers: getHeaders(), body: JSON.stringify(payload) });
     }
 
     const resData = await res.json();
     if(resData.error) {
-      alert("Bmob后台拦截报错了: " + resData.error);
+      alert("保存失败: " + resData.error);
     } else {
       await load(); 
       hide("ov-form");
     }
   } catch(e) {
-    alert("前端崩溃报错: " + e.message);
+    alert("网络请求报错: " + e.message);
   } finally {
     btn.textContent = origText;
     btn.disabled = false;
@@ -929,7 +900,7 @@ async function addUse(id){
   render();
 
   try {
-    await fetch(`${API_BASE}/${id}`, {
+    await fetch(API_BASE + "/" + id, {
       method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify({ useCount: it.useCount })
@@ -943,7 +914,7 @@ function confirmDel(id){
   pendingDelId=id;pendingDelIds=null;
   const it=items.find(i=>i.id===id);
   document.getElementById("del-title").textContent="删除物品";
-  document.getElementById("del-msg").textContent=`确定删除「${it?.name}」吗？此操作无法撤销。`;
+  document.getElementById("del-msg").textContent="确定删除「" + (it ? it.name : "") + "」吗？此操作无法撤销。";
   show("ov-del");
 }
 
@@ -956,11 +927,11 @@ document.getElementById("del-confirm-btn").addEventListener("click", async ()=>{
   try {
     if(pendingDelIds){
       for(let id of pendingDelIds){
-        await fetch(`${API_BASE}/${id}`, { method: "DELETE", headers: getHeaders() });
+        await fetch(API_BASE + "/" + id, { method: "DELETE", headers: getHeaders() });
       }
       exitSelMode();
     }else if(pendingDelId){
-      await fetch(`${API_BASE}/${pendingDelId}`, { method: "DELETE", headers: getHeaders() });
+      await fetch(API_BASE + "/" + pendingDelId, { method: "DELETE", headers: getHeaders() });
       hide("ov-det");
     }
     await load();
@@ -994,7 +965,7 @@ function delCat(i){
   const c=cats[i];
   if(items.some(it=>it.category===c)){
     document.getElementById("del-title").textContent="无法删除";
-    document.getElementById("del-msg").textContent=`「${c}」分类下还有物品，请先移动或删除这些物品后再试。`;
+    document.getElementById("del-msg").textContent="「" + c + "」分类下还有物品，请先移动或删除后再试。";
     pendingDelId=null;pendingDelIds=null;
     document.getElementById("del-confirm-btn").style.display="none";
     show("ov-del");
