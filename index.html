@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>物品</title>
 <style>
-/* 这里 100% 保留了你最初手写的优秀 CSS 设计 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
@@ -33,15 +32,14 @@
   --sb:env(safe-area-inset-bottom,16px);
   --st:env(safe-area-inset-top,0px);
   --tab-h:calc(54px + var(--sb));
-  --shadow:0 2px 12px rgba(0,0,0,.06);
-  --shadow-md:0 4px 24px rgba(0,0,0,.10);
 }
 
 body{
   font-family:'Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
   background:var(--bg);
   color:var(--text);
-  min-height:100vh;
+  /* 修复苹果 16 Pro 底部遮挡问题 */
+  min-height:100dvh; 
   padding-bottom:calc(var(--tab-h) + 16px);
   font-size:15px;
 }
@@ -54,7 +52,8 @@ input,select,textarea{font-family:inherit;outline:none}
   background:rgba(247,246,242,.94);
   backdrop-filter:blur(24px);
   -webkit-backdrop-filter:blur(24px);
-  padding:calc(var(--st) + 14px) 20px 12px;
+  /* 修复苹果 16 Pro 灵动岛遮挡问题 */
+  padding:max(14px, env(safe-area-inset-top)) 20px 12px;
   position:sticky;top:0;z-index:30;
   border-bottom:1px solid var(--border);
 }
@@ -245,7 +244,8 @@ input,select,textarea{font-family:inherit;outline:none}
   border-top:1px solid var(--border);
   display:flex;
   height:var(--tab-h);
-  padding-bottom:var(--sb);
+  /* 修复苹果 16 Pro 底部安全区 */
+  padding-bottom:env(safe-area-inset-bottom, 16px);
   z-index:27;
 }
 .tab{
@@ -637,7 +637,7 @@ input,select,textarea{font-family:inherit;outline:none}
 </div>
 
 <script>
-/* ==================== BMOB 后端配置 (已更正为 codenow 域名) ==================== */
+/* ==================== BMOB 后端配置 (codenow 域名) ==================== */
 const APP_ID = "ecd704dd1d7fe06136bde12f599ca2ac";
 const API_KEY = "9062a2dd58ec8d05b81bc6a0ef62ba15";
 const API_BASE = "https://api.codenow.cn/1/classes/WupinItem"; 
@@ -670,11 +670,10 @@ let selMode=false,selectedIds=new Set();
 let searchQ="",sortK="default",activeTab="items";
 let pendingDelId=null,pendingDelIds=null;
 
-let uploadFileObj = null; // 用于存储选择的真实文件，用于传给后端
+let uploadFileObj = null;
 
-/* ── 核心改造：获取后端数据 (替换原有的 localStorage 逻辑) ── */
+/* ── 核心：从后端获取数据 ── */
 async function load(){
-  // 分类是个人偏好设置，依然可以存在本地
   try{cats=JSON.parse(localStorage.getItem("cv4")||"null")}catch{cats=null}
   if(!cats)cats=[...DEF_CATS];
 
@@ -683,7 +682,7 @@ async function load(){
     const data = await res.json();
     if(data.results) {
       items = data.results.map(it => ({
-        id: it.objectId,          // Bmob 的 objectId 完美映射为你原逻辑的 id
+        id: it.objectId,
         name: it.name,
         category: it.category || "其他",
         photo: it.photo || null,
@@ -697,12 +696,11 @@ async function load(){
       items = [];
     }
   } catch(err) {
-    console.error("从云端加载数据失败", err);
+    console.error("加载数据失败", err);
   }
   render();
 }
 
-// 仅用于保存分类的本地存储
 function saveCats(){
   localStorage.setItem("cv4",JSON.stringify(cats));
 }
@@ -866,7 +864,7 @@ document.getElementById("fab").addEventListener("click",()=>openForm(null));
 /* ── PHOTO ── */
 document.getElementById("file-inp").addEventListener("change",function(){
   const f=this.files[0];if(!f)return;
-  uploadFileObj = f; // 捕获真实文件用于 Bmob 上传
+  uploadFileObj = f; 
   
   const reader=new FileReader();
   reader.onload=e=>{
@@ -884,7 +882,7 @@ document.getElementById("file-inp").addEventListener("change",function(){
 function retakePhoto(e){
   e.stopPropagation();
   newPhoto=null;
-  uploadFileObj=null; // 清除待上传文件
+  uploadFileObj=null; 
   const pz=document.getElementById("photo-zone");
   const img=pz.querySelector("img");if(img)img.remove();
   pz.querySelector(".pz-icon").style.display="";
@@ -902,11 +900,11 @@ document.querySelectorAll(".ctab").forEach(b=>{
   });
 });
 
-/* ── FORM (改造为真实的异步保存逻辑) ── */
+/* ── FORM ── */
 function openForm(it){
   editId=it?it.id:null;
   newPhoto=it?.photo||null;
-  uploadFileObj=null; // 重置文件
+  uploadFileObj=null; 
 
   const pz=document.getElementById("photo-zone");
   const eImg=pz.querySelector("img");if(eImg)eImg.remove();
@@ -943,7 +941,7 @@ function populateCatSelect(sel){
   s.innerHTML=cats.map(c=>`<option value="${c}"${c===sel?" selected":""}>${c}</option>`).join("");
 }
 
-// 保存逻辑
+/* ── 核心：带弹窗排错机制的保存逻辑 ── */
 document.getElementById("form-ok").addEventListener("click", async ()=>{
   const name=document.getElementById("f-name").value.trim();
   const price=parseFloat(document.getElementById("f-price").value)||0;
@@ -960,9 +958,8 @@ document.getElementById("form-ok").addEventListener("click", async ()=>{
   btn.disabled = true;
 
   try {
-    let photoUrl = newPhoto; // 原有图片或保持 null
+    let photoUrl = newPhoto; 
 
-    // 如果选择了新文件，优先上传到 Bmob
     if (uploadFileObj) {
       const safeName = encodeURIComponent(uploadFileObj.name || "image.jpg");
       const fileRes = await fetch(FILE_API + safeName, {
@@ -973,6 +970,11 @@ document.getElementById("form-ok").addEventListener("click", async ()=>{
       const fileData = await fileRes.json();
       if (fileData.url) {
         photoUrl = fileData.url;
+      } else if (fileData.error) {
+        alert("图片上传报错: " + fileData.error);
+        btn.textContent = origText;
+        btn.disabled = false;
+        return;
       }
     }
 
@@ -981,16 +983,23 @@ document.getElementById("form-ok").addEventListener("click", async ()=>{
       purchaseDate: dt, costType: curCostT, useCount: uc, note
     };
 
+    let res;
     if(editId){
-      await fetch(`${API_BASE}/${editId}`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) });
+      res = await fetch(`${API_BASE}/${editId}`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) });
     }else{
-      await fetch(API_BASE, { method: "POST", headers: getHeaders(), body: JSON.stringify(payload) });
+      res = await fetch(API_BASE, { method: "POST", headers: getHeaders(), body: JSON.stringify(payload) });
     }
 
-    await load(); // 重新拉取真实数据
-    hide("ov-form");
+    const resData = await res.json();
+    if(resData.error) {
+      alert("Bmob后台拦截报错了: " + resData.error);
+    } else {
+      await load(); 
+      hide("ov-form");
+    }
   } catch(e) {
-    alert("保存失败，请检查网络！");
+    // 终极排雷：如果代码在这个块里崩溃，一定会弹框显示原因！
+    alert("前端代码崩溃报错: " + e.message + "\n" + e.toString());
   } finally {
     btn.textContent = origText;
     btn.disabled = false;
@@ -1037,12 +1046,10 @@ async function addUse(id){
   const it=items.find(i=>i.id===id);if(!it)return;
   it.useCount=(it.useCount||1)+1;
   
-  // 先在界面上更新（乐观更新）
   const d=document.getElementById("uc-d");if(d)d.textContent=it.useCount+" 次";
   const c=document.getElementById("det-cost");if(c)c.textContent=fmtCost(it);
   render();
 
-  // 后台同步到数据库
   try {
     await fetch(`${API_BASE}/${id}`, {
       method: "PUT",
@@ -1062,7 +1069,6 @@ function confirmDel(id){
   show("ov-del");
 }
 
-// 批量删除与单行删除逻辑 (真实后端删除)
 document.getElementById("del-confirm-btn").addEventListener("click", async ()=>{
   const btn = document.getElementById("del-confirm-btn");
   const origText = btn.textContent;
@@ -1071,7 +1077,6 @@ document.getElementById("del-confirm-btn").addEventListener("click", async ()=>{
 
   try {
     if(pendingDelIds){
-      // 循环发起删除请求
       for(let id of pendingDelIds){
         await fetch(`${API_BASE}/${id}`, { method: "DELETE", headers: getHeaders() });
       }
@@ -1084,7 +1089,7 @@ document.getElementById("del-confirm-btn").addEventListener("click", async ()=>{
     hide("ov-del");
     pendingDelId=null;pendingDelIds=null;
   } catch(e) {
-    alert("删除失败");
+    alert("删除失败: " + e.message);
   } finally {
     btn.textContent = origText;
     btn.disabled = false;
